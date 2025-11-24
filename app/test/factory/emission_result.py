@@ -11,7 +11,6 @@ from app.database.schemas import EmissionResultDBModel
 from app.test.factory.base_factory import AsyncSQLAlchemyFactory
 from app.test.factory.create_async_session import async_session
 from app.test.factory.emission_factor import EmissionFactorFactory
-from app.test.factory.activity import ElectricityActivityFactory
 from app.utils.constants import ActivityType
 
 

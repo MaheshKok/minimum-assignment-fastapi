@@ -3,7 +3,7 @@ Base repository with common CRUD operations.
 
 Provides generic database operations that can be inherited by specific repositories.
 """
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
+from typing import Any, Generic, TypeVar
 from uuid import UUID
 
 from sqlalchemy import delete, select, update
@@ -19,7 +19,7 @@ class BaseRepository(Generic[ModelType]):
     Provides generic database access methods for any SQLAlchemy model.
     """
 
-    def __init__(self, model: Type[ModelType], session: AsyncSession):
+    def __init__(self, model: type[ModelType], session: AsyncSession):
         """
         Initialize repository.
 
@@ -46,7 +46,7 @@ class BaseRepository(Generic[ModelType]):
         await self.session.refresh(instance)
         return instance
 
-    async def get_by_id(self, id: UUID) -> Optional[ModelType]:
+    async def get_by_id(self, id: UUID) -> ModelType | None:
         """
         Get record by ID.
 
@@ -61,8 +61,8 @@ class BaseRepository(Generic[ModelType]):
         return result.scalars().first()
 
     async def get_all(
-        self, skip: int = 0, limit: int = 100, filters: Optional[Dict] = None
-    ) -> List[ModelType]:
+        self, skip: int = 0, limit: int = 100, filters: dict | None = None
+    ) -> list[ModelType]:
         """
         Get all records with optional filtering.
 
@@ -86,7 +86,7 @@ class BaseRepository(Generic[ModelType]):
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def update(self, id: UUID, **data: Any) -> Optional[ModelType]:
+    async def update(self, id: UUID, **data: Any) -> ModelType | None:
         """
         Update record by ID.
 
@@ -119,7 +119,7 @@ class BaseRepository(Generic[ModelType]):
         await self.session.flush()
         return result.rowcount > 0
 
-    async def soft_delete(self, id: UUID) -> Optional[ModelType]:
+    async def soft_delete(self, id: UUID) -> ModelType | None:
         """
         Soft delete record by ID (sets is_deleted=True).
 
@@ -136,7 +136,7 @@ class BaseRepository(Generic[ModelType]):
 
         return await self.update(id, is_deleted=True)
 
-    async def count(self, filters: Optional[Dict] = None) -> int:
+    async def count(self, filters: dict | None = None) -> int:
         """
         Count records with optional filtering.
 
@@ -170,7 +170,7 @@ class BaseRepository(Generic[ModelType]):
         instance = await self.get_by_id(id)
         return instance is not None
 
-    async def bulk_create(self, items: List[Dict[str, Any]]) -> List[ModelType]:
+    async def bulk_create(self, items: list[dict[str, Any]]) -> list[ModelType]:
         """
         Create multiple records in bulk.
 

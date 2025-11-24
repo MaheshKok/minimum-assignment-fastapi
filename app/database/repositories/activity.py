@@ -4,7 +4,7 @@ Repository for Activity database operations.
 Handles all database interactions for all activity types (Electricity, Air Travel, Goods & Services).
 """
 from datetime import date
-from typing import Dict, List, Optional, Type, Union
+from typing import Union
 from uuid import UUID
 
 from sqlalchemy import select
@@ -32,7 +32,7 @@ class ActivityRepository(BaseRepository[ActivityModelType]):
     """
 
     # Model type mapping
-    MODEL_MAP: Dict[str, Type[ActivityModelType]] = {
+    MODEL_MAP: dict[str, type[ActivityModelType]] = {
         "electricity": ElectricityActivityDBModel,
         "air_travel": AirTravelActivityDBModel,
         "goods_services": GoodsServicesActivityDBModel,
@@ -65,7 +65,7 @@ class ActivityRepository(BaseRepository[ActivityModelType]):
 
     async def get_all_active(
         self, skip: int = 0, limit: int = 100
-    ) -> List[ActivityModelType]:
+    ) -> list[ActivityModelType]:
         """
         Get all active (non-deleted) activities.
 
@@ -85,7 +85,7 @@ class ActivityRepository(BaseRepository[ActivityModelType]):
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_by_id_active(self, id: UUID) -> Optional[ActivityModelType]:
+    async def get_by_id_active(self, id: UUID) -> ActivityModelType | None:
         """
         Get active (non-deleted) activity by ID.
 
@@ -103,7 +103,7 @@ class ActivityRepository(BaseRepository[ActivityModelType]):
 
     async def get_by_date_range(
         self, start_date: date, end_date: date, skip: int = 0, limit: int = 100
-    ) -> List[ActivityModelType]:
+    ) -> list[ActivityModelType]:
         """
         Get activities within a date range.
 
@@ -131,7 +131,7 @@ class ActivityRepository(BaseRepository[ActivityModelType]):
 
     async def get_pending_calculation(
         self, skip: int = 0, limit: int = 100
-    ) -> List[ActivityModelType]:
+    ) -> list[ActivityModelType]:
         """
         Get activities that don't have emission calculations yet.
 
@@ -146,7 +146,7 @@ class ActivityRepository(BaseRepository[ActivityModelType]):
         # For now, return all active activities (filtering can be done in service layer)
         return await self.get_all_active(skip=skip, limit=limit)
 
-    async def soft_delete(self, id: UUID) -> Optional[ActivityModelType]:
+    async def soft_delete(self, id: UUID) -> ActivityModelType | None:
         """
         Soft delete activity by ID.
 
@@ -158,7 +158,7 @@ class ActivityRepository(BaseRepository[ActivityModelType]):
         """
         return await self.update(id, is_deleted=True)
 
-    async def restore(self, id: UUID) -> Optional[ActivityModelType]:
+    async def restore(self, id: UUID) -> ActivityModelType | None:
         """
         Restore soft-deleted activity.
 
@@ -189,7 +189,7 @@ class ElectricityActivityRepository(ActivityRepository):
 
     async def get_by_country(
         self, country: str, skip: int = 0, limit: int = 100
-    ) -> List[ElectricityActivityDBModel]:
+    ) -> list[ElectricityActivityDBModel]:
         """
         Get electricity activities by country.
 
@@ -223,7 +223,7 @@ class AirTravelActivityRepository(ActivityRepository):
 
     async def get_by_flight_range(
         self, flight_range: str, skip: int = 0, limit: int = 100
-    ) -> List[AirTravelActivityDBModel]:
+    ) -> list[AirTravelActivityDBModel]:
         """
         Get air travel activities by flight range.
 
@@ -257,7 +257,7 @@ class GoodsServicesActivityRepository(ActivityRepository):
 
     async def get_by_category(
         self, supplier_category: str, skip: int = 0, limit: int = 100
-    ) -> List[GoodsServicesActivityDBModel]:
+    ) -> list[GoodsServicesActivityDBModel]:
         """
         Get goods & services activities by supplier category.
 

@@ -5,7 +5,6 @@ from decimal import Decimal
 
 import pytest
 
-from app.database import Database
 from app.services.calculators.electricity_calculator import ElectricityCalculator
 from app.services.calculators.emission_calculator import EmissionCalculationService
 from app.services.calculators.goods_services_calculator import GoodsServicesCalculator
@@ -26,7 +25,7 @@ from app.test.factory.emission_factor import (
 async def test_electricity_calculator(test_db_session):
     """Test ElectricityCalculator service."""
     # Create factor and activity
-    factor = await ElectricityEmissionFactorFactory(
+    await ElectricityEmissionFactorFactory(
         lookup_identifier="United Kingdom", co2e_factor=0.3
     )
     activity = await ElectricityActivityFactory(
@@ -46,7 +45,7 @@ async def test_electricity_calculator(test_db_session):
 async def test_travel_calculator(test_db_session):
     """Test TravelCalculator service."""
     # Create factor and activity
-    factor = await AirTravelEmissionFactorFactory(
+    await AirTravelEmissionFactorFactory(
         lookup_identifier="Short-haul, Economy class", co2e_factor=0.15
     )
     activity = await AirTravelActivityFactory(
@@ -86,7 +85,7 @@ async def test_goods_services_calculator(test_db_session):
 async def test_emission_calculation_service_single(test_db_session):
     """Test EmissionCalculationService calculate_single method."""
     # Create factor and activity
-    factor = await ElectricityEmissionFactorFactory(
+    await ElectricityEmissionFactorFactory(
         lookup_identifier="Test Country 0", co2e_factor=0.3
     )
     activity = await ElectricityActivityFactory(usage_kwh=1000.0)
@@ -104,10 +103,10 @@ async def test_emission_calculation_service_single(test_db_session):
 async def test_emission_calculation_service_batch(test_db_session):
     """Test EmissionCalculationService calculate_batch method."""
     # Create factors
-    elec_factor = await ElectricityEmissionFactorFactory(
+    await ElectricityEmissionFactorFactory(
         lookup_identifier="Test Country 0", co2e_factor=0.3
     )
-    travel_factor = await AirTravelEmissionFactorFactory(
+    await AirTravelEmissionFactorFactory(
         lookup_identifier="Short-haul, Economy class", co2e_factor=0.15
     )
 
@@ -142,7 +141,7 @@ async def test_calculator_no_matching_factor(test_db_session):
 async def test_calculator_fuzzy_matching(test_db_session):
     """Test calculator fuzzy matching functionality."""
     # Create factor with specific name
-    factor = await ElectricityEmissionFactorFactory(
+    await ElectricityEmissionFactorFactory(
         lookup_identifier="United Kingdom", co2e_factor=0.3
     )
 
@@ -165,7 +164,7 @@ async def test_calculator_fuzzy_matching(test_db_session):
 async def test_recalculate_activity(test_db_session):
     """Test recalculating emissions for an activity."""
     # Create factor and activity
-    factor = await ElectricityEmissionFactorFactory(
+    await ElectricityEmissionFactorFactory(
         lookup_identifier="United Kingdom", co2e_factor=0.3
     )
     activity = await ElectricityActivityFactory(
@@ -187,16 +186,16 @@ async def test_recalculate_activity(test_db_session):
 async def test_calculate_all_pending(test_db_session):
     """Test calculating emissions for all pending activities."""
     # Create factors
-    factor1 = await ElectricityEmissionFactorFactory(
+    await ElectricityEmissionFactorFactory(
         lookup_identifier="Test Country 0", co2e_factor=0.3
     )
-    factor2 = await ElectricityEmissionFactorFactory(
+    await ElectricityEmissionFactorFactory(
         lookup_identifier="Test Country 1", co2e_factor=0.3
     )
 
     # Create activities (all pending, no emissions calculated)
-    activity1 = await ElectricityActivityFactory()
-    activity2 = await ElectricityActivityFactory()
+    await ElectricityActivityFactory()
+    await ElectricityActivityFactory()
 
     # Calculate all pending
     service = EmissionCalculationService(test_db_session)
@@ -210,7 +209,7 @@ async def test_calculate_all_pending(test_db_session):
 async def test_calculation_metadata_stored(test_db_session):
     """Test that calculation metadata is properly stored."""
     # Create factor and activity
-    factor = await ElectricityEmissionFactorFactory(
+    await ElectricityEmissionFactorFactory(
         lookup_identifier="United Kingdom", co2e_factor=0.3
     )
     activity = await ElectricityActivityFactory(
@@ -231,7 +230,7 @@ async def test_calculation_metadata_stored(test_db_session):
 async def test_batch_calculate_with_errors(test_db_session):
     """Test batch calculation with some activities failing."""
     # Create one factor but two activities
-    factor = await ElectricityEmissionFactorFactory(
+    await ElectricityEmissionFactorFactory(
         lookup_identifier="Test Country 0", co2e_factor=0.3
     )
     activity1 = await ElectricityActivityFactory()  # Will match factor

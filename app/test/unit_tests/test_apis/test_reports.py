@@ -1,7 +1,6 @@
 """
 API tests for reports endpoint following kkb_fastapi pattern.
 """
-from decimal import Decimal
 
 import pytest
 
@@ -37,10 +36,10 @@ async def test_generate_empty_emissions_report(test_async_client):
 async def test_generate_emissions_report_with_data(test_async_client):
     """Test generating emissions report with calculated emissions."""
     # Create factors
-    elec_factor = await ElectricityEmissionFactorFactory(
+    await ElectricityEmissionFactorFactory(
         lookup_identifier="United Kingdom", co2e_factor=0.3
     )
-    travel_factor = await AirTravelEmissionFactorFactory(
+    await AirTravelEmissionFactorFactory(
         lookup_identifier="Short-haul, Economy class", co2e_factor=0.15
     )
 
@@ -73,10 +72,10 @@ async def test_generate_emissions_report_with_data(test_async_client):
 async def test_report_breakdown_by_activity_type(test_async_client):
     """Test that report includes breakdown by activity type."""
     # Create factors
-    elec_factor = await ElectricityEmissionFactorFactory(
+    await ElectricityEmissionFactorFactory(
         lookup_identifier="Test Country 0", co2e_factor=0.3
     )
-    goods_factor = await GoodsServicesEmissionFactorFactory(
+    await GoodsServicesEmissionFactorFactory(
         lookup_identifier="Category 0", co2e_factor=0.5
     )
 
@@ -109,7 +108,7 @@ async def test_report_breakdown_by_activity_type(test_async_client):
 async def test_report_scope_2_emissions(test_async_client):
     """Test that report correctly aggregates Scope 2 emissions."""
     # Create electricity factor (Scope 2)
-    factor = await ElectricityEmissionFactorFactory(
+    await ElectricityEmissionFactorFactory(
         lookup_identifier="Test Country 0", co2e_factor=0.3
     )
 
@@ -135,7 +134,7 @@ async def test_report_scope_2_emissions(test_async_client):
 async def test_report_scope_3_emissions(test_async_client):
     """Test that report correctly aggregates Scope 3 emissions."""
     # Create air travel factor (Scope 3, Category 6)
-    factor = await AirTravelEmissionFactorFactory(
+    await AirTravelEmissionFactorFactory(
         lookup_identifier="Short-haul, Economy class", co2e_factor=0.15
     )
 
@@ -164,7 +163,7 @@ async def test_report_scope_3_emissions(test_async_client):
 async def test_report_scope_3_category_1_emissions(test_async_client):
     """Test that report correctly aggregates Scope 3 Category 1 emissions."""
     # Create goods/services factor (Scope 3, Category 1)
-    factor = await GoodsServicesEmissionFactorFactory(
+    await GoodsServicesEmissionFactorFactory(
         lookup_identifier="Category 0", co2e_factor=0.5
     )
 
@@ -191,10 +190,10 @@ async def test_report_scope_3_category_1_emissions(test_async_client):
 async def test_report_total_emissions(test_async_client):
     """Test that report calculates total emissions correctly."""
     # Create factors for different scopes
-    elec_factor = await ElectricityEmissionFactorFactory(
+    await ElectricityEmissionFactorFactory(
         lookup_identifier="Test Country 0", co2e_factor=0.3
     )
-    travel_factor = await AirTravelEmissionFactorFactory(
+    await AirTravelEmissionFactorFactory(
         lookup_identifier="Short-haul, Economy class", co2e_factor=0.15
     )
 

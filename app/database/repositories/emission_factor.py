@@ -3,7 +3,6 @@ Repository for EmissionFactor database operations.
 
 Handles all database interactions for emission factors.
 """
-from typing import List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -26,7 +25,7 @@ class EmissionFactorRepository(BaseRepository[EmissionFactorDBModel]):
 
     async def get_by_activity_type(
         self, activity_type: str, skip: int = 0, limit: int = 100
-    ) -> List[EmissionFactorDBModel]:
+    ) -> list[EmissionFactorDBModel]:
         """
         Get emission factors by activity type.
 
@@ -49,7 +48,7 @@ class EmissionFactorRepository(BaseRepository[EmissionFactorDBModel]):
 
     async def get_by_scope(
         self, scope: int, skip: int = 0, limit: int = 100
-    ) -> List[EmissionFactorDBModel]:
+    ) -> list[EmissionFactorDBModel]:
         """
         Get emission factors by GHG scope.
 
@@ -72,7 +71,7 @@ class EmissionFactorRepository(BaseRepository[EmissionFactorDBModel]):
 
     async def get_by_lookup_identifier(
         self, lookup_identifier: str
-    ) -> Optional[EmissionFactorDBModel]:
+    ) -> EmissionFactorDBModel | None:
         """
         Get emission factor by lookup identifier.
 
@@ -89,8 +88,8 @@ class EmissionFactorRepository(BaseRepository[EmissionFactorDBModel]):
         return result.scalars().first()
 
     async def search_by_identifier(
-        self, identifier: str, activity_type: Optional[str] = None
-    ) -> List[EmissionFactorDBModel]:
+        self, identifier: str, activity_type: str | None = None
+    ) -> list[EmissionFactorDBModel]:
         """
         Search emission factors by partial identifier match.
 
@@ -112,8 +111,8 @@ class EmissionFactorRepository(BaseRepository[EmissionFactorDBModel]):
         return list(result.scalars().all())
 
     async def get_by_activity_type_and_category(
-        self, activity_type: str, category: Optional[int] = None
-    ) -> List[EmissionFactorDBModel]:
+        self, activity_type: str, category: int | None = None
+    ) -> list[EmissionFactorDBModel]:
         """
         Get emission factors by activity type and optional category.
 
@@ -136,7 +135,7 @@ class EmissionFactorRepository(BaseRepository[EmissionFactorDBModel]):
 
     async def get_all_active(
         self, skip: int = 0, limit: int = 100
-    ) -> List[EmissionFactorDBModel]:
+    ) -> list[EmissionFactorDBModel]:
         """
         Get all active (non-deleted) emission factors.
 

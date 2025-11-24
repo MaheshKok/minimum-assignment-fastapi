@@ -14,11 +14,11 @@ from app.database.repositories.emission_factor import EmissionFactorRepository
 from app.database.repositories.emission_result import EmissionResultRepository
 
 __all__ = [
-    "BaseRepository",
-    "EmissionFactorRepository",
     "ActivityRepository",
-    "ElectricityActivityRepository",
     "AirTravelActivityRepository",
-    "GoodsServicesActivityRepository",
+    "BaseRepository",
+    "ElectricityActivityRepository",
+    "EmissionFactorRepository",
     "EmissionResultRepository",
+    "GoodsServicesActivityRepository",
 ]

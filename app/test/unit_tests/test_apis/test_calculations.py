@@ -22,7 +22,7 @@ from app.test.factory.emission_factor import (
 async def test_calculate_emissions_for_electricity_activity(test_async_client):
     """Test calculating emissions for electricity activity."""
     # Create emission factor and activity
-    factor = await ElectricityEmissionFactorFactory(
+    await ElectricityEmissionFactorFactory(
         lookup_identifier="United Kingdom", co2e_factor=0.3
     )
     activity = await ElectricityActivityFactory(
@@ -46,7 +46,7 @@ async def test_calculate_emissions_for_electricity_activity(test_async_client):
 async def test_calculate_emissions_for_air_travel_activity(test_async_client):
     """Test calculating emissions for air travel activity."""
     # Create emission factor and activity
-    factor = await AirTravelEmissionFactorFactory(
+    await AirTravelEmissionFactorFactory(
         lookup_identifier="Short-haul, Economy class", co2e_factor=0.15
     )
     activity = await AirTravelActivityFactory(
@@ -69,7 +69,7 @@ async def test_calculate_emissions_for_air_travel_activity(test_async_client):
 async def test_calculate_emissions_for_goods_services_activity(test_async_client):
     """Test calculating emissions for goods & services activity."""
     # Create emission factor and activity
-    factor = await GoodsServicesEmissionFactorFactory(
+    await GoodsServicesEmissionFactorFactory(
         lookup_identifier="Office Supplies", co2e_factor=0.5
     )
     activity = await GoodsServicesActivityFactory(
@@ -92,10 +92,10 @@ async def test_calculate_emissions_for_goods_services_activity(test_async_client
 async def test_calculate_emissions_batch(test_async_client):
     """Test calculating emissions for multiple activities in batch."""
     # Create emission factors
-    elec_factor = await ElectricityEmissionFactorFactory(
+    await ElectricityEmissionFactorFactory(
         lookup_identifier="Test Country 0", co2e_factor=0.3
     )
-    travel_factor = await AirTravelEmissionFactorFactory(
+    await AirTravelEmissionFactorFactory(
         lookup_identifier="Short-haul, Economy class", co2e_factor=0.15
     )
 
@@ -120,7 +120,7 @@ async def test_calculate_emissions_batch(test_async_client):
 async def test_recalculate_emissions(test_async_client):
     """Test recalculating emissions for an activity."""
     # Create emission factor and activity
-    factor = await ElectricityEmissionFactorFactory(
+    await ElectricityEmissionFactorFactory(
         lookup_identifier="United Kingdom", co2e_factor=0.3
     )
     activity = await ElectricityActivityFactory(
@@ -183,7 +183,7 @@ async def test_calculate_emissions_invalid_activity_id(test_async_client):
 async def test_calculate_emissions_confidence_score(test_async_client):
     """Test that confidence score is included in calculation results."""
     # Create factor and activity
-    factor = await ElectricityEmissionFactorFactory(
+    await ElectricityEmissionFactorFactory(
         lookup_identifier="United Kingdom", co2e_factor=0.3
     )
     activity = await ElectricityActivityFactory(
@@ -205,7 +205,7 @@ async def test_calculate_emissions_confidence_score(test_async_client):
 async def test_calculate_emissions_metadata(test_async_client):
     """Test that calculation metadata is included in results."""
     # Create factor and activity
-    factor = await ElectricityEmissionFactorFactory(
+    await ElectricityEmissionFactorFactory(
         lookup_identifier="United Kingdom", co2e_factor=0.3
     )
     activity = await ElectricityActivityFactory(

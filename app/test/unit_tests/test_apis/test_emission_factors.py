@@ -1,7 +1,6 @@
 """
 API tests for emission factors endpoint following kkb_fastapi pattern.
 """
-from decimal import Decimal
 
 import pytest
 from sqlalchemy import select

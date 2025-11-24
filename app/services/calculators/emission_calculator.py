@@ -311,7 +311,7 @@ class EmissionCalculationService:
         # Get IDs of activities that already have results
         result_repo = EmissionResultRepository(self.session)
         existing_results = await result_repo.get_all_results()
-        existing_ids = set(r.activity_id for r in existing_results)
+        existing_ids = {r.activity_id for r in existing_results}
 
         # Get pending activities (those without results)
         pending_activities = []

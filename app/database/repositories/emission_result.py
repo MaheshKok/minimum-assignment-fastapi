@@ -4,7 +4,6 @@ Repository for EmissionResult database operations.
 Handles all database interactions for emission calculation results.
 """
 from datetime import datetime
-from typing import List, Optional
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -28,7 +27,7 @@ class EmissionResultRepository(BaseRepository[EmissionResultDBModel]):
 
     async def get_by_activity_id(
         self, activity_id: UUID
-    ) -> Optional[EmissionResultDBModel]:
+    ) -> EmissionResultDBModel | None:
         """
         Get emission result for a specific activity.
 
@@ -49,7 +48,7 @@ class EmissionResultRepository(BaseRepository[EmissionResultDBModel]):
 
     async def get_all_by_activity_id(
         self, activity_id: UUID
-    ) -> List[EmissionResultDBModel]:
+    ) -> list[EmissionResultDBModel]:
         """
         Get all emission results for a specific activity (including historical).
 
@@ -68,8 +67,8 @@ class EmissionResultRepository(BaseRepository[EmissionResultDBModel]):
         return list(result.scalars().all())
 
     async def get_by_activity_ids(
-        self, activity_ids: List[UUID]
-    ) -> List[EmissionResultDBModel]:
+        self, activity_ids: list[UUID]
+    ) -> list[EmissionResultDBModel]:
         """
         Get emission results for multiple activities.
 
@@ -87,7 +86,7 @@ class EmissionResultRepository(BaseRepository[EmissionResultDBModel]):
 
     async def get_all_results(
         self, skip: int = 0, limit: int = 100
-    ) -> List[EmissionResultDBModel]:
+    ) -> list[EmissionResultDBModel]:
         """
         Get all emission results with pagination.
 
@@ -128,7 +127,7 @@ class EmissionResultRepository(BaseRepository[EmissionResultDBModel]):
 
     async def get_results_by_date_range(
         self, start_date: datetime, end_date: datetime, skip: int = 0, limit: int = 100
-    ) -> List[EmissionResultDBModel]:
+    ) -> list[EmissionResultDBModel]:
         """
         Get emission results created within a date range.
 
@@ -191,7 +190,7 @@ class EmissionResultRepository(BaseRepository[EmissionResultDBModel]):
         result = await self.session.execute(stmt)
         return result.scalar() or 0
 
-    async def get_latest_results(self, limit: int = 10) -> List[EmissionResultDBModel]:
+    async def get_latest_results(self, limit: int = 10) -> list[EmissionResultDBModel]:
         """
         Get the most recently calculated emission results.
 
@@ -207,7 +206,7 @@ class EmissionResultRepository(BaseRepository[EmissionResultDBModel]):
 
     async def update_result(
         self, result_id: UUID, **data
-    ) -> Optional[EmissionResultDBModel]:
+    ) -> EmissionResultDBModel | None:
         """
         Update an emission result.
 
@@ -222,7 +221,7 @@ class EmissionResultRepository(BaseRepository[EmissionResultDBModel]):
 
     async def get_results_with_low_confidence(
         self, threshold: float = 0.8, skip: int = 0, limit: int = 100
-    ) -> List[EmissionResultDBModel]:
+    ) -> list[EmissionResultDBModel]:
         """
         Get emission results with confidence score below threshold.
 

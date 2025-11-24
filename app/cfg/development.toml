@@ -31,6 +31,6 @@ version = "1.0.0"
 debug = true
 
 [emission_calculation]
-fuzzy_match_threshold = 0.8
+fuzzy_match_threshold = 80
 default_confidence_score = 1.0
 decimal_precision = 4

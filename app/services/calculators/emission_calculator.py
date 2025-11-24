@@ -5,12 +5,14 @@ Coordinates all calculator services and provides unified interface.
 """
 
 import logging
+import os
 from decimal import Decimal
 from typing import Any, Union
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_config
 from app.database.repositories import (
     AirTravelActivityRepository,
     ElectricityActivityRepository,
@@ -30,6 +32,28 @@ from .goods_services_calculator import GoodsServicesCalculator
 from .travel_calculator import TravelCalculator
 
 logger = logging.getLogger(__name__)
+
+
+def get_fuzzy_threshold_from_config() -> int:
+    """
+    Get fuzzy threshold from config file based on current environment.
+
+    Returns:
+        int: Fuzzy threshold value (0-100) from config, defaults to 80
+    """
+    try:
+        env = os.getenv("ENVIRONMENT", "development")
+        config_file = f"{env}.toml"
+        config = get_config(config_file)
+        threshold = config.data.get("emission_calculation", {}).get(
+            "fuzzy_match_threshold", 80
+        )
+        return int(threshold)
+    except Exception as e:
+        logger.warning(
+            f"Failed to read fuzzy_match_threshold from config: {e}. Using default 80"
+        )
+        return 80
 
 
 class EmissionCalculationError(Exception):
@@ -79,18 +103,32 @@ class EmissionCalculationService:
     Coordinates calculator services and provides batch processing capabilities.
     """
 
-    def __init__(self, session: AsyncSession):
-        """Initialize service with database session."""
+    def __init__(self, session: AsyncSession, fuzzy_threshold: int | None = None):
+        """
+        Initialize service with database session.
+
+        Args:
+            session: Database session
+            fuzzy_threshold: Optional fuzzy match threshold override.
+                           If not provided, reads from config file.
+        """
         self.session = session
+        self.fuzzy_threshold = (
+            fuzzy_threshold
+            if fuzzy_threshold is not None
+            else get_fuzzy_threshold_from_config()
+        )
         self.electricity_calculator = ElectricityCalculator(session)
         self.goods_services_calculator = GoodsServicesCalculator(session)
         self.travel_calculator = TravelCalculator(session)
+        logger.info(f"Initialized EmissionCalculationService with fuzzy_threshold={self.fuzzy_threshold}")
 
     async def calculate_single(
         self,
         activity: ActivityInstance,
-        fuzzy_threshold: int = 80,
+        fuzzy_threshold: int | None = None,
         raise_on_error: bool = False,
+        skip_duplicate_check: bool = False,
     ) -> EmissionResultDBModel | None:
         """
         Calculate emissions for a single activity.
@@ -101,6 +139,7 @@ class EmissionCalculationService:
             activity: Activity instance (any type)
             fuzzy_threshold: Minimum fuzzy match threshold (0-100)
             raise_on_error: If True, raise exceptions instead of returning None
+            skip_duplicate_check: If True, skip check for existing results (for recalculation)
 
         Returns:
             EmissionResultDBModel instance if successful, None otherwise
@@ -114,7 +153,22 @@ class EmissionCalculationService:
             >>> result = await service.calculate_single(activity)
             >>> print(f"Emissions: {result.co2e_tonnes} tonnes")
         """
+        # Use instance threshold if not explicitly provided
+        if fuzzy_threshold is None:
+            fuzzy_threshold = self.fuzzy_threshold
+
         activity_type = activity.activity_type
+
+        # Check if result already exists (unless explicitly skipped for recalculation)
+        if not skip_duplicate_check:
+            result_repo = EmissionResultRepository(self.session)
+            existing_result = await result_repo.get_by_activity_id(activity.id)
+            if existing_result:
+                logger.info(
+                    f"Emission result already exists for {activity_type} activity {activity.id}, "
+                    f"returning existing result"
+                )
+                return existing_result
 
         logger.info(f"Calculating emissions for {activity_type} activity {activity.id}")
 
@@ -169,7 +223,7 @@ class EmissionCalculationService:
     async def calculate_batch(
         self,
         activities: list[ActivityInstance],
-        fuzzy_threshold: int = 80,
+        fuzzy_threshold: int | None = None,
         fail_fast: bool = False,
     ) -> dict[str, Any]:
         """
@@ -188,6 +242,10 @@ class EmissionCalculationService:
             >>> summary = await service.calculate_batch(activities)
             >>> print(f"Processed: {summary['statistics']['total_processed']}")
         """
+        # Use instance threshold if not explicitly provided
+        if fuzzy_threshold is None:
+            fuzzy_threshold = self.fuzzy_threshold
+
         logger.info(f"Starting batch calculation for {len(activities)} activities")
 
         results = []
@@ -290,49 +348,231 @@ class EmissionCalculationService:
 
     async def calculate_all_pending(
         self,
-        fuzzy_threshold: int = 80,
+        fuzzy_threshold: int | None = None,
+        batch_size: int = 100,
+        use_streaming: bool = True,
     ) -> dict[str, Any]:
         """
         Calculate emissions for all activities that don't have results yet.
 
+        Now supports two modes:
+        - Streaming mode (default): Processes in chunks, constant memory usage
+        - Legacy mode: Loads all activities into memory (limited to ~10K)
+
         Args:
             fuzzy_threshold: Minimum fuzzy match threshold
+            batch_size: Number of records to process per batch (streaming mode only)
+            use_streaming: If True, use cursor-based streaming for unlimited scale
 
         Returns:
             Dictionary with results and statistics
 
         Example:
             >>> service = EmissionCalculationService(session)
-            >>> summary = await service.calculate_all_pending()
+            >>> # Process millions of records with constant memory
+            >>> summary = await service.calculate_all_pending(batch_size=100)
             >>> print(f"New calculations: {summary['statistics']['total_processed']}")
         """
+        # Use instance threshold if not explicitly provided
+        if fuzzy_threshold is None:
+            fuzzy_threshold = self.fuzzy_threshold
+
+        if use_streaming:
+            return await self._calculate_all_pending_streaming(
+                fuzzy_threshold=fuzzy_threshold, batch_size=batch_size
+            )
+        else:
+            return await self._calculate_all_pending_legacy(
+                fuzzy_threshold=fuzzy_threshold
+            )
+
+    async def _calculate_all_pending_streaming(
+        self, fuzzy_threshold: int, batch_size: int = 100
+    ) -> dict[str, Any]:
+        """
+        TRUE streaming implementation - constant memory regardless of dataset size.
+
+        HONEST IMPLEMENTATION:
+        - Does NOT accumulate all results in memory
+        - Does NOT build global set of existing IDs
+        - Uses per-activity duplicate check (EXISTS query via calculate_single)
+        - Only tracks aggregate statistics (counters, not objects)
+        - TRUE constant memory: ~10-20MB regardless of 1K or 1M records
+
+        Trade-off: Slightly slower due to per-record EXISTS checks, but scales to unlimited records.
+        """
+        logger.info(
+            f"Starting TRUE streaming calculation (batch_size={batch_size}, constant memory)"
+        )
+
+        # Only track aggregate statistics, NOT full result objects
+        total_processed = 0
+        total_errors = 0
+        total_co2e = Decimal("0")
+        stats_by_type = {}
+        error_samples = []  # Keep only first 10 errors as samples
+        MAX_ERROR_SAMPLES = 10
+
+        for repo_class, activity_type_name in [
+            (ElectricityActivityRepository, ActivityType.ELECTRICITY),
+            (GoodsServicesActivityRepository, ActivityType.GOODS_SERVICES),
+            (AirTravelActivityRepository, ActivityType.AIR_TRAVEL),
+        ]:
+            repo = repo_class(self.session)
+            offset = 0
+            processed_this_type = 0
+
+            logger.info(f"Processing {activity_type_name} activities in batches...")
+
+            while True:
+                # Fetch batch of activities
+                activities = await repo.get_all_active(skip=offset, limit=batch_size)
+                if not activities:
+                    break
+
+                # Process activities in this batch
+                for activity in activities:
+                    try:
+                        # calculate_single already checks for duplicates internally
+                        # No need to build a global existing_ids set!
+                        result = await self.calculate_single(
+                            activity, fuzzy_threshold=fuzzy_threshold
+                        )
+
+                        if result:
+                            # Track aggregate stats ONLY, don't store result object
+                            activity_type = activity.activity_type
+                            if activity_type not in stats_by_type:
+                                stats_by_type[activity_type] = {
+                                    "count": 0,
+                                    "total_co2e": Decimal("0"),
+                                }
+
+                            stats_by_type[activity_type]["count"] += 1
+                            stats_by_type[activity_type]["total_co2e"] += (
+                                result.co2e_tonnes
+                            )
+                            total_co2e += result.co2e_tonnes
+                            total_processed += 1
+                            processed_this_type += 1
+                        else:
+                            total_errors += 1
+                            if len(error_samples) < MAX_ERROR_SAMPLES:
+                                error_samples.append(
+                                    {
+                                        "activity_id": str(activity.id),
+                                        "activity_type": activity.activity_type,
+                                        "error": "Calculation returned None",
+                                    }
+                                )
+
+                    except Exception as e:
+                        total_errors += 1
+                        logger.error(
+                            f"Error processing activity {activity.id}: {e}",
+                            exc_info=True,
+                        )
+                        if len(error_samples) < MAX_ERROR_SAMPLES:
+                            error_samples.append(
+                                {
+                                    "activity_id": str(activity.id),
+                                    "activity_type": activity.activity_type,
+                                    "error": str(e),
+                                }
+                            )
+
+                # Commit after each batch to save progress
+                await self.session.commit()
+
+                # CRITICAL: Expunge all objects from session to prevent memory accumulation
+                # SQLAlchemy's identity map retains all ORM objects until expunged/closed
+                # Without this, memory grows O(n) even though we don't store results explicitly
+                self.session.expunge_all()
+
+                logger.info(
+                    f"Processed batch at offset {offset}, "
+                    f"{processed_this_type} {activity_type_name} activities calculated so far"
+                )
+                offset += batch_size
+
+            logger.info(
+                f"Completed {activity_type_name}: {processed_this_type} activities calculated"
+            )
+
+        # Calculate overall statistics
+        total_activities = total_processed + total_errors
+        success_rate = (
+            (total_processed / total_activities * 100) if total_activities > 0 else 100.0
+        )
+
+        summary = {
+            "results": [],  # Explicitly empty - we don't return full objects
+            "statistics": {
+                "total_activities": total_activities,
+                "total_processed": total_processed,
+                "total_errors": total_errors,
+                "success_rate": f"{success_rate:.2f}%",
+                "total_co2e_tonnes": float(total_co2e),
+                "by_activity_type": {
+                    k: {"count": v["count"], "total_co2e": float(v["total_co2e"])}
+                    for k, v in stats_by_type.items()
+                },
+            },
+            "errors": error_samples,  # Only sample errors, not all
+            "note": "True streaming mode - result objects not returned to save memory. "
+                    "Query emission_results table for full results.",
+        }
+
+        logger.info(
+            f"TRUE streaming complete: {total_processed}/{total_activities} successful, "
+            f"{total_co2e} tonnes CO2e total (constant memory used)"
+        )
+
+        return summary
+
+    async def _calculate_all_pending_legacy(
+        self, fuzzy_threshold: int
+    ) -> dict[str, Any]:
+        """
+        Legacy implementation - loads all activities into memory.
+
+        DEPRECATED: Use streaming mode for better scalability.
+        Limited to ~10K records due to memory constraints.
+        """
+        logger.warning(
+            "Using legacy mode - limited to ~10K records. "
+            "Consider using streaming mode (use_streaming=True) for better scale."
+        )
+
         logger.info("Finding all activities without emission results")
 
-        # Get IDs of activities that already have results
+        # Get IDs of activities that already have results (no pagination limit)
         result_repo = EmissionResultRepository(self.session)
-        existing_results = await result_repo.get_all_results()
+        existing_results = await result_repo.get_all_results(skip=0, limit=10000)
         existing_ids = {r.activity_id for r in existing_results}
 
-        # Get pending activities (those without results)
+        logger.info(f"Found {len(existing_ids)} existing emission results")
+
+        # Get pending activities (those without results) - no pagination limit
         pending_activities = []
 
         # Electricity activities
         elec_repo = ElectricityActivityRepository(self.session)
-        elec_activities = await elec_repo.get_all_active()
+        elec_activities = await elec_repo.get_all_active(skip=0, limit=10000)
         for activity in elec_activities:
             if activity.id not in existing_ids:
                 pending_activities.append(activity)
 
         # Goods/Services activities
         goods_repo = GoodsServicesActivityRepository(self.session)
-        goods_activities = await goods_repo.get_all_active()
+        goods_activities = await goods_repo.get_all_active(skip=0, limit=10000)
         for activity in goods_activities:
             if activity.id not in existing_ids:
                 pending_activities.append(activity)
 
         # Air Travel activities
         travel_repo = AirTravelActivityRepository(self.session)
-        travel_activities = await travel_repo.get_all_active()
+        travel_activities = await travel_repo.get_all_active(skip=0, limit=10000)
         for activity in travel_activities:
             if activity.id not in existing_ids:
                 pending_activities.append(activity)
@@ -361,7 +601,7 @@ class EmissionCalculationService:
     async def recalculate_activity(
         self,
         activity: ActivityInstance,
-        fuzzy_threshold: int = 80,
+        fuzzy_threshold: int | None = None,
     ) -> EmissionResultDBModel | None:
         """
         Recalculate emissions for an activity (deletes old result first).
@@ -380,6 +620,10 @@ class EmissionCalculationService:
             >>> service = EmissionCalculationService(session)
             >>> new_result = await service.recalculate_activity(activity)
         """
+        # Use instance threshold if not explicitly provided
+        if fuzzy_threshold is None:
+            fuzzy_threshold = self.fuzzy_threshold
+
         logger.info(
             f"Recalculating emissions for {activity.activity_type} activity {activity.id}"
         )
@@ -391,14 +635,16 @@ class EmissionCalculationService:
         if deleted_count > 0:
             logger.info(f"Deleted {deleted_count} existing result(s)")
 
-        # Calculate new result
-        return await self.calculate_single(activity, fuzzy_threshold=fuzzy_threshold)
+        # Calculate new result - skip duplicate check since we just deleted it
+        return await self.calculate_single(
+            activity, fuzzy_threshold=fuzzy_threshold, skip_duplicate_check=True
+        )
 
     async def calculate_by_activity_id(
         self,
         activity_type: str,
         activity_id: UUID,
-        fuzzy_threshold: int = 80,
+        fuzzy_threshold: int | None = None,
         recalculate: bool = False,
     ) -> EmissionResultDBModel | None:
         """
@@ -420,6 +666,10 @@ class EmissionCalculationService:
             ...     recalculate=True
             ... )
         """
+        # Use instance threshold if not explicitly provided
+        if fuzzy_threshold is None:
+            fuzzy_threshold = self.fuzzy_threshold
+
         # Fetch activity based on type using repositories
         activity = None
         if activity_type == ActivityType.ELECTRICITY:

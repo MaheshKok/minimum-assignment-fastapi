@@ -339,44 +339,26 @@ class DatabaseSeeder:
         """
         Calculate emissions for all activities without emission results.
 
+        Uses streaming mode for efficient processing of large datasets.
+
         Returns:
             Dictionary with calculation statistics
         """
         service = EmissionCalculationService(self.session)
 
-        # Get all activities without emission results (no pagination limit)
-        electricity_repo = ElectricityActivityRepository(self.session)
-        air_travel_repo = AirTravelActivityRepository(self.session)
-        goods_services_repo = GoodsServicesActivityRepository(self.session)
-
-        electricity_activities = await electricity_repo.get_all_active(skip=0, limit=10000)
-        air_travel_activities = await air_travel_repo.get_all_active(skip=0, limit=10000)
-        goods_services_activities = await goods_services_repo.get_all_active(skip=0, limit=10000)
-
-        all_activities = (
-            electricity_activities + air_travel_activities + goods_services_activities
+        # Use streaming mode to handle unlimited activities efficiently
+        logger.info("Calculating emissions using streaming mode...")
+        summary = await service.calculate_all_pending(
+            batch_size=100,  # Process 100 activities at a time
+            use_streaming=True,  # Enable streaming for unlimited scale
         )
 
-        calculated = 0
-        errors = []
-
-        for activity in all_activities:
-            try:
-                result = await service.calculate_single(activity)
-                if result:
-                    calculated += 1
-            except Exception as e:
-                logger.warning(
-                    f"Failed to calculate emissions for activity {activity.id}: {e}"
-                )
-                errors.append(str(e))
-
-        await self.session.commit()
-
-        logger.info(f"Calculated emissions for {calculated}/{len(all_activities)} activities")
-
+        # Extract statistics for backward compatibility
+        stats = summary["statistics"]
         return {
-            "calculated": calculated,
-            "total": len(all_activities),
-            "errors": errors,
+            "calculated": stats["total_processed"],
+            "total": stats["total_activities"],
+            "errors": summary["errors"],
+            "total_co2e_tonnes": stats["total_co2e_tonnes"],
+            "by_activity_type": stats["by_activity_type"],
         }

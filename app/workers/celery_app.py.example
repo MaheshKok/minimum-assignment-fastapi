@@ -1,0 +1,288 @@
+"""
+Celery application for background emission calculations.
+
+EXAMPLE IMPLEMENTATION - Level 2 Scaling
+
+This file shows how to implement Celery for background job processing.
+To use:
+1. Install dependencies: pip install celery[redis]
+2. Start Redis: docker run -d -p 6379:6379 redis
+3. Rename to celery_app.py
+4. Start workers: celery -A app.workers.celery_app worker --loglevel=info
+
+Benefits:
+- Non-blocking API responses
+- Horizontal scaling (add more workers)
+- Progress tracking
+- Automatic retries
+- Can process 100K+ records efficiently
+"""
+
+from celery import Celery, group
+from celery.result import AsyncResult
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
+import asyncio
+import os
+from uuid import UUID
+
+from app.core.config import get_config
+from app.services.calculators.emission_calculator import EmissionCalculationService
+from app.database.repositories import (
+    ElectricityActivityRepository,
+    AirTravelActivityRepository,
+    GoodsServicesActivityRepository,
+)
+from app.utils.constants import ActivityType
+
+# Initialize Celery
+celery_app = Celery(
+    "emission_calculator",
+    broker=os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0"),
+    backend=os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/1"),
+)
+
+# Celery configuration
+celery_app.conf.update(
+    task_serializer="json",
+    accept_content=["json"],
+    result_serializer="json",
+    timezone="UTC",
+    enable_utc=True,
+    task_track_started=True,
+    task_acks_late=True,
+    worker_prefetch_multiplier=1,
+)
+
+
+# Database session factory for workers
+def get_async_session_maker():
+    """Create async session maker for Celery workers."""
+    config = get_config()
+    db_config = config.data["db"]
+
+    database_url = (
+        f"postgresql+asyncpg://{db_config['username']}:{db_config['password']}"
+        f"@{db_config['host']}:{db_config['port']}/{db_config['database']}"
+    )
+
+    engine = create_async_engine(database_url, echo=False)
+    async_session_maker = sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
+    return async_session_maker
+
+
+# Helper to run async code in Celery tasks
+def run_async(coroutine):
+    """Run async coroutine in Celery task."""
+    loop = asyncio.get_event_loop()
+    if loop.is_running():
+        # Create new event loop for nested async
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    return loop.run_until_complete(coroutine)
+
+
+@celery_app.task(bind=True, max_retries=3, default_retry_delay=60)
+def calculate_emission_task(self, activity_id: str, activity_type: str):
+    """
+    Background task to calculate emissions for a single activity.
+
+    Args:
+        activity_id: UUID of the activity
+        activity_type: Type of activity (electricity, air_travel, goods_services)
+
+    Returns:
+        Dictionary with emission result data
+    """
+    async def _calculate():
+        session_maker = get_async_session_maker()
+        async with session_maker() as session:
+            # Fetch activity based on type
+            if activity_type == ActivityType.ELECTRICITY:
+                repo = ElectricityActivityRepository(session)
+            elif activity_type == ActivityType.AIR_TRAVEL:
+                repo = AirTravelActivityRepository(session)
+            elif activity_type == ActivityType.GOODS_SERVICES:
+                repo = GoodsServicesActivityRepository(session)
+            else:
+                raise ValueError(f"Unknown activity type: {activity_type}")
+
+            activity = await repo.get_by_id_active(UUID(activity_id))
+            if not activity:
+                raise ValueError(f"Activity not found: {activity_id}")
+
+            # Calculate emissions
+            service = EmissionCalculationService(session)
+            result = await service.calculate_single(activity)
+
+            await session.commit()
+
+            if result:
+                return {
+                    "activity_id": str(result.activity_id),
+                    "co2e_tonnes": float(result.co2e_tonnes),
+                    "emission_factor_id": str(result.emission_factor_id),
+                    "confidence_score": float(result.confidence_score),
+                }
+            return None
+
+    try:
+        # Update task state to show progress
+        self.update_state(
+            state="STARTED",
+            meta={"activity_id": activity_id, "status": "Calculating..."}
+        )
+
+        result = run_async(_calculate())
+
+        return {
+            "status": "success",
+            "activity_id": activity_id,
+            "result": result,
+        }
+
+    except Exception as e:
+        # Retry on failure
+        try:
+            raise self.retry(exc=e)
+        except self.MaxRetriesExceededError:
+            return {
+                "status": "failed",
+                "activity_id": activity_id,
+                "error": str(e),
+            }
+
+
+@celery_app.task(bind=True)
+def calculate_batch_task(self, activity_ids: list[str], activity_types: list[str]):
+    """
+    Background task to process batch of activities in parallel.
+
+    Creates sub-tasks for each activity and processes them in parallel using Celery groups.
+
+    Args:
+        activity_ids: List of activity UUIDs
+        activity_types: Corresponding activity types
+
+    Returns:
+        Dictionary with batch processing results
+    """
+    # Create group of parallel tasks
+    job = group(
+        calculate_emission_task.s(aid, atype)
+        for aid, atype in zip(activity_ids, activity_types)
+    )
+
+    # Execute tasks in parallel
+    result = job.apply_async()
+
+    # Update state
+    self.update_state(
+        state="STARTED",
+        meta={
+            "total": len(activity_ids),
+            "completed": 0,
+            "status": "Processing batch...",
+        }
+    )
+
+    return {
+        "status": "queued",
+        "batch_size": len(activity_ids),
+        "group_id": result.id,
+    }
+
+
+@celery_app.task(bind=True)
+def calculate_all_pending_task(self, batch_size: int = 100):
+    """
+    Background task to process all pending emission calculations.
+
+    Uses streaming mode to handle unlimited activities.
+
+    Args:
+        batch_size: Number of records to process per batch
+
+    Returns:
+        Dictionary with processing statistics
+    """
+    async def _calculate_all():
+        session_maker = get_async_session_maker()
+        async with session_maker() as session:
+            service = EmissionCalculationService(session)
+
+            # Use streaming mode for efficient processing
+            summary = await service.calculate_all_pending(
+                batch_size=batch_size,
+                use_streaming=True,
+            )
+
+            return summary
+
+    try:
+        self.update_state(
+            state="STARTED",
+            meta={"status": "Finding pending activities..."}
+        )
+
+        result = run_async(_calculate_all())
+
+        return {
+            "status": "success",
+            "statistics": result["statistics"],
+            "errors": result["errors"],
+        }
+
+    except Exception as e:
+        return {
+            "status": "failed",
+            "error": str(e),
+        }
+
+
+# Periodic task example (requires celery beat)
+@celery_app.task
+def periodic_calculate_pending():
+    """
+    Periodic task to automatically calculate pending emissions.
+
+    Schedule this with Celery Beat:
+
+    celery_app.conf.beat_schedule = {
+        'calculate-pending-every-hour': {
+            'task': 'app.workers.celery_app.periodic_calculate_pending',
+            'schedule': 3600.0,  # Every hour
+        },
+    }
+    """
+    return calculate_all_pending_task.delay(batch_size=100)
+
+
+# Helper function to check task status
+def get_task_status(task_id: str):
+    """
+    Get status of a background task.
+
+    Args:
+        task_id: Celery task ID
+
+    Returns:
+        Dictionary with task status
+    """
+    result = AsyncResult(task_id, app=celery_app)
+
+    return {
+        "task_id": task_id,
+        "state": result.state,  # PENDING, STARTED, SUCCESS, FAILURE, RETRY
+        "info": result.info,  # Task metadata
+        "result": result.result if result.ready() else None,
+        "successful": result.successful(),
+        "failed": result.failed(),
+    }
+
+
+if __name__ == "__main__":
+    # Start worker: python -m app.workers.celery_app worker
+    celery_app.start()

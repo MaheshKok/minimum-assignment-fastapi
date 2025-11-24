@@ -7,11 +7,10 @@ import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db_session
-from app.database.schemas import EmissionFactorDBModel
+from app.database.repositories import EmissionFactorRepository
 from app.pydantic_models.emission_factor import (
     EmissionFactorCreate,
     EmissionFactorPydModel,
@@ -35,9 +34,8 @@ async def list_emission_factors(
     """
     List all emission factors with pagination.
     """
-    stmt = select(EmissionFactorDBModel).offset(skip).limit(limit)
-    result = await session.execute(stmt)
-    factors = result.scalars().all()
+    repo = EmissionFactorRepository(session)
+    factors = await repo.get_all(skip=skip, limit=limit)
     return factors
 
 
@@ -49,9 +47,8 @@ async def get_emission_factor(
     """
     Get emission factor by ID.
     """
-    stmt = select(EmissionFactorDBModel).where(EmissionFactorDBModel.id == factor_id)
-    result = await session.execute(stmt)
-    factor = result.scalars().first()
+    repo = EmissionFactorRepository(session)
+    factor = await repo.get_by_id(factor_id)
 
     if not factor:
         raise HTTPException(
@@ -70,10 +67,8 @@ async def create_emission_factor(
     """
     Create a new emission factor.
     """
-    factor_db = EmissionFactorDBModel(**factor_data.model_dump())
-    session.add(factor_db)
-    await session.flush()
-    await session.refresh(factor_db)
+    repo = EmissionFactorRepository(session)
+    factor_db = await repo.create(**factor_data.model_dump())
 
     logger.info(f"Created emission factor: {factor_db.id}")
     return factor_db
@@ -88,22 +83,14 @@ async def update_emission_factor(
     """
     Update an existing emission factor.
     """
-    stmt = select(EmissionFactorDBModel).where(EmissionFactorDBModel.id == factor_id)
-    result = await session.execute(stmt)
-    factor = result.scalars().first()
+    repo = EmissionFactorRepository(session)
+    factor = await repo.update(factor_id, **factor_data.model_dump(exclude_unset=True))
 
     if not factor:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Emission factor {factor_id} not found",
         )
-
-    # Update fields
-    for field, value in factor_data.model_dump(exclude_unset=True).items():
-        setattr(factor, field, value)
-
-    await session.flush()
-    await session.refresh(factor)
 
     logger.info(f"Updated emission factor: {factor_id}")
     return factor
@@ -117,15 +104,13 @@ async def delete_emission_factor(
     """
     Delete an emission factor.
     """
-    stmt = select(EmissionFactorDBModel).where(EmissionFactorDBModel.id == factor_id)
-    result = await session.execute(stmt)
-    factor = result.scalars().first()
+    repo = EmissionFactorRepository(session)
+    deleted = await repo.delete(factor_id)
 
-    if not factor:
+    if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Emission factor {factor_id} not found",
         )
 
-    await session.delete(factor)
     logger.info(f"Deleted emission factor: {factor_id}")

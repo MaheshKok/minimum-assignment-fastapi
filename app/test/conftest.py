@@ -133,7 +133,7 @@ async def test_async_client(test_app):
     """
     transport = ASGITransport(app=test_app)
     async with AsyncClient(
-        transport=transport, base_url="http://localhost:8000", follow_redirects=True
+        transport=transport, base_url="http://test", follow_redirects=True
     ) as ac:
         yield ac
 

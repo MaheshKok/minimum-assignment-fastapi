@@ -9,9 +9,14 @@ from decimal import Decimal
 from typing import Any, Union
 from uuid import UUID
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.database.repositories import (
+    AirTravelActivityRepository,
+    ElectricityActivityRepository,
+    EmissionResultRepository,
+    GoodsServicesActivityRepository,
+)
 from app.database.schemas import (
     AirTravelActivityDBModel,
     ElectricityActivityDBModel,
@@ -304,31 +309,31 @@ class EmissionCalculationService:
         logger.info("Finding all activities without emission results")
 
         # Get IDs of activities that already have results
-        existing_result_stmt = select(EmissionResultDBModel.activity_id).distinct()
-        existing_result = await self.session.execute(existing_result_stmt)
-        existing_ids = set(existing_result.scalars().all())
+        result_repo = EmissionResultRepository(self.session)
+        existing_results = await result_repo.get_all_results()
+        existing_ids = set(r.activity_id for r in existing_results)
 
         # Get pending activities (those without results)
         pending_activities = []
 
         # Electricity activities
-        elec_stmt = select(ElectricityActivityDBModel)
-        elec_result = await self.session.execute(elec_stmt)
-        for activity in elec_result.scalars().all():
+        elec_repo = ElectricityActivityRepository(self.session)
+        elec_activities = await elec_repo.get_all_active()
+        for activity in elec_activities:
             if activity.id not in existing_ids:
                 pending_activities.append(activity)
 
         # Goods/Services activities
-        goods_stmt = select(GoodsServicesActivityDBModel)
-        goods_result = await self.session.execute(goods_stmt)
-        for activity in goods_result.scalars().all():
+        goods_repo = GoodsServicesActivityRepository(self.session)
+        goods_activities = await goods_repo.get_all_active()
+        for activity in goods_activities:
             if activity.id not in existing_ids:
                 pending_activities.append(activity)
 
         # Air Travel activities
-        travel_stmt = select(AirTravelActivityDBModel)
-        travel_result = await self.session.execute(travel_stmt)
-        for activity in travel_result.scalars().all():
+        travel_repo = AirTravelActivityRepository(self.session)
+        travel_activities = await travel_repo.get_all_active()
+        for activity in travel_activities:
             if activity.id not in existing_ids:
                 pending_activities.append(activity)
 
@@ -380,19 +385,11 @@ class EmissionCalculationService:
         )
 
         # Delete existing results for this activity
-        delete_stmt = select(EmissionResultDBModel).where(
-            EmissionResultDBModel.activity_type == activity.activity_type,
-            EmissionResultDBModel.activity_id == activity.id,
-        )
-        delete_result = await self.session.execute(delete_stmt)
-        existing_results = delete_result.scalars().all()
+        result_repo = EmissionResultRepository(self.session)
+        deleted_count = await result_repo.delete_by_activity_id(activity.id)
 
-        for existing in existing_results:
-            await self.session.delete(existing)
-
-        if existing_results:
-            logger.info(f"Deleted {len(existing_results)} existing result(s)")
-            await self.session.flush()
+        if deleted_count > 0:
+            logger.info(f"Deleted {deleted_count} existing result(s)")
 
         # Calculate new result
         return await self.calculate_single(activity, fuzzy_threshold=fuzzy_threshold)
@@ -423,25 +420,20 @@ class EmissionCalculationService:
             ...     recalculate=True
             ... )
         """
-        # Fetch activity based on type
+        # Fetch activity based on type using repositories
+        activity = None
         if activity_type == ActivityType.ELECTRICITY:
-            stmt = select(ElectricityActivityDBModel).where(
-                ElectricityActivityDBModel.id == activity_id
-            )
+            repo = ElectricityActivityRepository(self.session)
+            activity = await repo.get_by_id_active(activity_id)
         elif activity_type == ActivityType.GOODS_SERVICES:
-            stmt = select(GoodsServicesActivityDBModel).where(
-                GoodsServicesActivityDBModel.id == activity_id
-            )
+            repo = GoodsServicesActivityRepository(self.session)
+            activity = await repo.get_by_id_active(activity_id)
         elif activity_type == ActivityType.AIR_TRAVEL:
-            stmt = select(AirTravelActivityDBModel).where(
-                AirTravelActivityDBModel.id == activity_id
-            )
+            repo = AirTravelActivityRepository(self.session)
+            activity = await repo.get_by_id_active(activity_id)
         else:
             logger.error(f"Unknown activity type: {activity_type}")
             return None
-
-        result = await self.session.execute(stmt)
-        activity = result.scalars().first()
 
         if not activity:
             logger.error(f"Activity not found: {activity_type} {activity_id}")

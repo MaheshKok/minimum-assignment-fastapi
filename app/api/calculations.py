@@ -10,6 +10,11 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db_session
+from app.database.repositories import (
+    AirTravelActivityRepository,
+    ElectricityActivityRepository,
+    GoodsServicesActivityRepository,
+)
 from app.pydantic_models.calculation import (
     EmissionCalculationRequest,
     EmissionResultPydModel,
@@ -53,13 +58,6 @@ async def calculate_emissions(
         }
         ```
     """
-    from sqlalchemy import select
-
-    from app.database.schemas import (
-        AirTravelActivityDBModel,
-        ElectricityActivityDBModel,
-        GoodsServicesActivityDBModel,
-    )
     from app.services.calculators.emission_calculator import EmissionCalculationService
 
     logger.info(f"Calculating emissions for {len(request.activity_ids)} activities")
@@ -67,33 +65,26 @@ async def calculate_emissions(
     service = EmissionCalculationService(session)
     results = []
 
+    # Initialize repositories
+    electricity_repo = ElectricityActivityRepository(session)
+    air_travel_repo = AirTravelActivityRepository(session)
+    goods_services_repo = GoodsServicesActivityRepository(session)
+
     # Process each activity ID
     for activity_id in request.activity_ids:
-        # Try to find activity in each table
+        # Try to find activity in each repository
         activity = None
 
         # Check electricity activities
-        stmt = select(ElectricityActivityDBModel).where(
-            ElectricityActivityDBModel.id == activity_id
-        )
-        result = await session.execute(stmt)
-        activity = result.scalars().first()
+        activity = await electricity_repo.get_by_id_active(activity_id)
 
         # Check air travel activities if not found
         if not activity:
-            stmt = select(AirTravelActivityDBModel).where(
-                AirTravelActivityDBModel.id == activity_id
-            )
-            result = await session.execute(stmt)
-            activity = result.scalars().first()
+            activity = await air_travel_repo.get_by_id_active(activity_id)
 
         # Check goods/services activities if not found
         if not activity:
-            stmt = select(GoodsServicesActivityDBModel).where(
-                GoodsServicesActivityDBModel.id == activity_id
-            )
-            result = await session.execute(stmt)
-            activity = result.scalars().first()
+            activity = await goods_services_repo.get_by_id_active(activity_id)
 
         if not activity:
             logger.warning(f"Activity not found: {activity_id}")

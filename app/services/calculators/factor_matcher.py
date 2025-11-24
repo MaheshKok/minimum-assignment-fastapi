@@ -9,9 +9,9 @@ import logging
 from decimal import Decimal
 
 from rapidfuzz import fuzz, process
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.database.repositories import EmissionFactorRepository
 from app.database.schemas import EmissionFactorDBModel
 from app.utils.constants import ActivityType
 
@@ -36,6 +36,7 @@ class FactorMatcher:
             session: Async SQLAlchemy session
         """
         self.session = session
+        self.factor_repo = EmissionFactorRepository(session)
 
     async def exact_match(
         self,
@@ -53,19 +54,19 @@ class FactorMatcher:
             EmissionFactorDBModel if found, None otherwise
         """
         try:
-            stmt = select(EmissionFactorDBModel).where(
-                EmissionFactorDBModel.activity_type == activity_type,
-                EmissionFactorDBModel.lookup_identifier.ilike(lookup_identifier),
+            # Search by activity type and identifier
+            factors = await self.factor_repo.search_by_identifier(
+                lookup_identifier, activity_type=activity_type
             )
-            result = await self.session.execute(stmt)
-            factor = result.scalars().first()
 
-            if factor:
-                logger.debug(f"Exact match found for {activity_type}: {lookup_identifier}")
-            else:
-                logger.debug(f"No exact match for {activity_type}: {lookup_identifier}")
+            # Look for exact match (case-insensitive)
+            for factor in factors:
+                if factor.lookup_identifier.lower() == lookup_identifier.lower():
+                    logger.debug(f"Exact match found for {activity_type}: {lookup_identifier}")
+                    return factor
 
-            return factor
+            logger.debug(f"No exact match for {activity_type}: {lookup_identifier}")
+            return None
 
         except Exception as e:
             logger.error(f"Error in exact_match: {e}")
@@ -91,11 +92,7 @@ class FactorMatcher:
             Tuple of (EmissionFactorDBModel, confidence_score) if match found, None otherwise
         """
         # Get all factors for this activity type
-        stmt = select(EmissionFactorDBModel).where(
-            EmissionFactorDBModel.activity_type == activity_type
-        )
-        result = await self.session.execute(stmt)
-        factors = result.scalars().all()
+        factors = await self.factor_repo.get_by_activity_type(activity_type)
 
         if not factors:
             logger.warning(f"No emission factors found for {activity_type}")
@@ -208,11 +205,7 @@ class FactorMatcher:
             return result
 
         # Try partial matches if exact combination fails
-        stmt = select(EmissionFactorDBModel).where(
-            EmissionFactorDBModel.activity_type == ActivityType.AIR_TRAVEL
-        )
-        result_factors = await self.session.execute(stmt)
-        factors = result_factors.scalars().all()
+        factors = await self.factor_repo.get_by_activity_type(ActivityType.AIR_TRAVEL)
 
         for factor in factors:
             identifier = factor.lookup_identifier.lower()

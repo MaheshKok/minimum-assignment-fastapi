@@ -3,11 +3,14 @@ Selectors for EmissionFactor queries - async version.
 
 Provides optimized query methods for retrieving emission factors.
 Converted from Django ORM to SQLAlchemy async.
+
+NOTE: This selector now delegates to EmissionFactorRepository for consistency.
+Consider using EmissionFactorRepository directly in new code.
 """
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.database.repositories import EmissionFactorRepository
 from app.database.schemas import EmissionFactorDBModel
 from app.utils.constants import Scope
 
@@ -17,17 +20,17 @@ class EmissionFactorSelector:
     Query optimization layer for EmissionFactor.
 
     All READ operations for emission factors should go through this selector.
+    This class now delegates to EmissionFactorRepository for consistency.
     """
 
     def __init__(self, session: AsyncSession):
         """Initialize selector with database session."""
         self.session = session
+        self.repo = EmissionFactorRepository(session)
 
     async def get_all(self) -> list[EmissionFactorDBModel]:
         """Get all emission factors."""
-        stmt = select(EmissionFactorDBModel)
-        result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        return await self.repo.get_all()
 
     async def get_by_activity_type(self, activity_type: str) -> list[EmissionFactorDBModel]:
         """
@@ -39,11 +42,7 @@ class EmissionFactorSelector:
         Returns:
             List of EmissionFactorDBModel
         """
-        stmt = select(EmissionFactorDBModel).where(
-            EmissionFactorDBModel.activity_type == activity_type
-        )
-        result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        return await self.repo.get_by_activity_type(activity_type)
 
     async def get_by_scope(self, scope: int) -> list[EmissionFactorDBModel]:
         """
@@ -55,9 +54,7 @@ class EmissionFactorSelector:
         Returns:
             List of EmissionFactorDBModel
         """
-        stmt = select(EmissionFactorDBModel).where(EmissionFactorDBModel.scope == scope)
-        result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        return await self.repo.get_by_scope(scope)
 
     async def get_scope_2_factors(self) -> list[EmissionFactorDBModel]:
         """Get all Scope 2 emission factors."""
@@ -77,12 +74,10 @@ class EmissionFactorSelector:
         Returns:
             List of EmissionFactorDBModel
         """
-        stmt = select(EmissionFactorDBModel).where(
-            EmissionFactorDBModel.scope == Scope.SCOPE_3,
-            EmissionFactorDBModel.category == category,
-        )
-        result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        # Get all Scope 3 factors first
+        scope_3_factors = await self.get_scope_3_factors()
+        # Filter by category
+        return [f for f in scope_3_factors if f.category == category]
 
     async def search_by_identifier(self, search_term: str) -> list[EmissionFactorDBModel]:
         """
@@ -94,8 +89,4 @@ class EmissionFactorSelector:
         Returns:
             List of matching EmissionFactorDBModel
         """
-        stmt = select(EmissionFactorDBModel).where(
-            EmissionFactorDBModel.lookup_identifier.ilike(f"%{search_term}%")
-        )
-        result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        return await self.repo.search_by_identifier(search_term)

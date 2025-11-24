@@ -7,14 +7,13 @@ CRUD operations for activity data (Electricity, Air Travel, Goods & Services).
 import logging
 
 from fastapi import APIRouter, Depends, status
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db_session
-from app.database.schemas import (
-    AirTravelActivityDBModel,
-    ElectricityActivityDBModel,
-    GoodsServicesActivityDBModel,
+from app.database.repositories import (
+    AirTravelActivityRepository,
+    ElectricityActivityRepository,
+    GoodsServicesActivityRepository,
 )
 from app.pydantic_models.activity import (
     AirTravelActivityCreate,
@@ -43,14 +42,8 @@ async def list_electricity_activities(
     session: AsyncSession = Depends(get_db_session),
 ):
     """List electricity activities."""
-    stmt = (
-        select(ElectricityActivityDBModel)
-        .where(ElectricityActivityDBModel.is_deleted is False)
-        .offset(skip)
-        .limit(limit)
-    )
-    result = await session.execute(stmt)
-    activities = result.scalars().all()
+    repo = ElectricityActivityRepository(session)
+    activities = await repo.get_all_active(skip=skip, limit=limit)
     return activities
 
 
@@ -64,12 +57,10 @@ async def create_electricity_activity(
     session: AsyncSession = Depends(get_db_session),
 ):
     """Create electricity activity."""
-    activity_db = ElectricityActivityDBModel(
+    repo = ElectricityActivityRepository(session)
+    activity_db = await repo.create(
         **activity_data.model_dump(), activity_type=ActivityType.ELECTRICITY
     )
-    session.add(activity_db)
-    await session.flush()
-    await session.refresh(activity_db)
 
     logger.info(f"Created electricity activity: {activity_db.id}")
     return activity_db
@@ -83,14 +74,8 @@ async def list_air_travel_activities(
     session: AsyncSession = Depends(get_db_session),
 ):
     """List air travel activities."""
-    stmt = (
-        select(AirTravelActivityDBModel)
-        .where(AirTravelActivityDBModel.is_deleted is False)
-        .offset(skip)
-        .limit(limit)
-    )
-    result = await session.execute(stmt)
-    activities = result.scalars().all()
+    repo = AirTravelActivityRepository(session)
+    activities = await repo.get_all_active(skip=skip, limit=limit)
     return activities
 
 
@@ -107,7 +92,8 @@ async def create_air_travel_activity(
     # Calculate distance_km from miles
     distance_km = UnitConverter.miles_to_km(activity_data.distance_miles)
 
-    activity_db = AirTravelActivityDBModel(
+    repo = AirTravelActivityRepository(session)
+    activity_db = await repo.create(
         date=activity_data.date,
         distance_miles=activity_data.distance_miles,
         distance_km=distance_km,
@@ -117,9 +103,6 @@ async def create_air_travel_activity(
         raw_data=activity_data.raw_data,
         activity_type=ActivityType.AIR_TRAVEL,
     )
-    session.add(activity_db)
-    await session.flush()
-    await session.refresh(activity_db)
 
     logger.info(f"Created air travel activity: {activity_db.id}")
     return activity_db
@@ -133,14 +116,8 @@ async def list_goods_services_activities(
     session: AsyncSession = Depends(get_db_session),
 ):
     """List goods & services activities."""
-    stmt = (
-        select(GoodsServicesActivityDBModel)
-        .where(GoodsServicesActivityDBModel.is_deleted is False)
-        .offset(skip)
-        .limit(limit)
-    )
-    result = await session.execute(stmt)
-    activities = result.scalars().all()
+    repo = GoodsServicesActivityRepository(session)
+    activities = await repo.get_all_active(skip=skip, limit=limit)
     return activities
 
 
@@ -154,12 +131,10 @@ async def create_goods_services_activity(
     session: AsyncSession = Depends(get_db_session),
 ):
     """Create goods & services activity."""
-    activity_db = GoodsServicesActivityDBModel(
+    repo = GoodsServicesActivityRepository(session)
+    activity_db = await repo.create(
         **activity_data.model_dump(), activity_type=ActivityType.GOODS_SERVICES
     )
-    session.add(activity_db)
-    await session.flush()
-    await session.refresh(activity_db)
 
     logger.info(f"Created goods & services activity: {activity_db.id}")
     return activity_db

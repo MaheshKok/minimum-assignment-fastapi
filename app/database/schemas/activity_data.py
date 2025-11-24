@@ -68,6 +68,12 @@ class ElectricityActivityDBModel(Base, BaseActivityMixin):
 
     __tablename__ = "electricity_activities"
 
+    __table_args__ = (
+        Index("ix_electricity_activities_date_country", "date", "country"),
+        Index("ix_electricity_activities_date_desc", "date"),
+        {"comment": "Electricity consumption activity data (Scope 2)"},
+    )
+
     country = Column(
         String(100),
         nullable=False,
@@ -79,12 +85,6 @@ class ElectricityActivityDBModel(Base, BaseActivityMixin):
         Numeric(12, 4),
         nullable=False,
         comment="Electricity consumption in kilowatt-hours",
-    )
-
-    __table_args__ = (
-        Index("ix_electricity_activities_date_country", "date", "country"),
-        Index("ix_electricity_activities_date_desc", "date"),
-        {"comment": "Electricity consumption activity data (Scope 2)"},
     )
 
     def __repr__(self):
@@ -99,6 +99,14 @@ class GoodsServicesActivityDBModel(Base, BaseActivityMixin):
     """
 
     __tablename__ = "goods_services_activities"
+
+    __table_args__ = (
+        Index(
+            "ix_goods_services_activities_date_category", "date", "supplier_category"
+        ),
+        Index("ix_goods_services_activities_date_desc", "date"),
+        {"comment": "Purchased goods and services activity data (Scope 3, Category 1)"},
+    )
 
     supplier_category = Column(
         String(200),
@@ -119,14 +127,6 @@ class GoodsServicesActivityDBModel(Base, BaseActivityMixin):
         comment="Additional description of the purchase",
     )
 
-    __table_args__ = (
-        Index(
-            "ix_goods_services_activities_date_category", "date", "supplier_category"
-        ),
-        Index("ix_goods_services_activities_date_desc", "date"),
-        {"comment": "Purchased goods and services activity data (Scope 3, Category 1)"},
-    )
-
     def __repr__(self):
         return (
             f"<GoodsServicesActivityDBModel: {self.supplier_category} - "
@@ -142,6 +142,12 @@ class AirTravelActivityDBModel(Base, BaseActivityMixin):
     """
 
     __tablename__ = "air_travel_activities"
+
+    __table_args__ = (
+        Index("ix_air_travel_activities_date_range", "date", "flight_range"),
+        Index("ix_air_travel_activities_date_desc", "date"),
+        {"comment": "Air travel activity data (Scope 3, Category 6)"},
+    )
 
     distance_miles = Column(
         Numeric(10, 2),
@@ -166,12 +172,6 @@ class AirTravelActivityDBModel(Base, BaseActivityMixin):
         String(50),
         nullable=False,
         comment="Passenger class (e.g., Economy, Business, First)",
-    )
-
-    __table_args__ = (
-        Index("ix_air_travel_activities_date_range", "date", "flight_range"),
-        Index("ix_air_travel_activities_date_desc", "date"),
-        {"comment": "Air travel activity data (Scope 3, Category 6)"},
     )
 
     def __repr__(self):

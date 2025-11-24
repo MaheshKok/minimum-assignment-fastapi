@@ -23,6 +23,14 @@ class EmissionFactorDBModel(Base):
 
     __tablename__ = "emission_factors"
 
+    __table_args__ = (
+        Index("ix_emission_factors_activity_scope", "activity_type", "scope"),
+        Index(
+            "ix_emission_factors_activity_lookup", "activity_type", "lookup_identifier"
+        ),
+        {"comment": "Emission factor lookup table for CO2e calculations"},
+    )
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
     activity_type = Column(
@@ -82,14 +90,6 @@ class EmissionFactorDBModel(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
-    )
-
-    __table_args__ = (
-        Index("ix_emission_factors_activity_scope", "activity_type", "scope"),
-        Index(
-            "ix_emission_factors_activity_lookup", "activity_type", "lookup_identifier"
-        ),
-        {"comment": "Emission factor lookup table for CO2e calculations"},
     )
 
     def __repr__(self):

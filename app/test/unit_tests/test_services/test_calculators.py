@@ -1,6 +1,7 @@
 """
 Service tests for emission calculators following kkb_fastapi pattern.
 """
+
 from decimal import Decimal
 
 import pytest
@@ -65,7 +66,7 @@ async def test_travel_calculator(test_db_session):
 async def test_goods_services_calculator(test_db_session):
     """Test GoodsServicesCalculator service."""
     # Create factor and activity
-    factor = await GoodsServicesEmissionFactorFactory(
+    await GoodsServicesEmissionFactorFactory(
         lookup_identifier="Office Supplies", co2e_factor=0.5
     )
     activity = await GoodsServicesActivityFactory(

@@ -19,6 +19,7 @@ from app.pydantic_models.calculation import (
     EmissionCalculationRequest,
     EmissionResultPydModel,
 )
+from app.services.calculators.emission_calculator import EmissionCalculationService
 
 router = APIRouter(
     prefix="/api/v1/calculations",
@@ -58,8 +59,6 @@ async def calculate_emissions(
         }
         ```
     """
-    from app.services.calculators.emission_calculator import EmissionCalculationService
-
     logger.info(f"Calculating emissions for {len(request.activity_ids)} activities")
 
     service = EmissionCalculationService(session)

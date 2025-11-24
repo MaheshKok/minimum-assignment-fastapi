@@ -1,6 +1,9 @@
 """
 API tests for calculations endpoint following kkb_fastapi pattern.
 """
+
+from uuid import uuid4
+
 import pytest
 from sqlalchemy import select
 
@@ -32,7 +35,9 @@ async def test_calculate_emissions_for_electricity_activity(test_async_client):
     # Calculate emissions
     payload = {"activity_ids": [str(activity.id)], "recalculate": False}
 
-    response = await test_async_client.post("/api/v1/calculations/calculate", json=payload)
+    response = await test_async_client.post(
+        "/api/v1/calculations/calculate", json=payload
+    )
     assert response.status_code == 200
 
     data = response.json()
@@ -56,7 +61,9 @@ async def test_calculate_emissions_for_air_travel_activity(test_async_client):
     # Calculate emissions
     payload = {"activity_ids": [str(activity.id)], "recalculate": False}
 
-    response = await test_async_client.post("/api/v1/calculations/calculate", json=payload)
+    response = await test_async_client.post(
+        "/api/v1/calculations/calculate", json=payload
+    )
     assert response.status_code == 200
 
     data = response.json()
@@ -79,7 +86,9 @@ async def test_calculate_emissions_for_goods_services_activity(test_async_client
     # Calculate emissions
     payload = {"activity_ids": [str(activity.id)], "recalculate": False}
 
-    response = await test_async_client.post("/api/v1/calculations/calculate", json=payload)
+    response = await test_async_client.post(
+        "/api/v1/calculations/calculate", json=payload
+    )
     assert response.status_code == 200
 
     data = response.json()
@@ -109,7 +118,9 @@ async def test_calculate_emissions_batch(test_async_client):
         "recalculate": False,
     }
 
-    response = await test_async_client.post("/api/v1/calculations/calculate", json=payload)
+    response = await test_async_client.post(
+        "/api/v1/calculations/calculate", json=payload
+    )
     assert response.status_code == 200
 
     data = response.json()
@@ -156,7 +167,9 @@ async def test_calculate_emissions_no_matching_factor(test_async_client):
 
     payload = {"activity_ids": [str(activity.id)], "recalculate": False}
 
-    response = await test_async_client.post("/api/v1/calculations/calculate", json=payload)
+    response = await test_async_client.post(
+        "/api/v1/calculations/calculate", json=payload
+    )
     assert response.status_code == 200
 
     data = response.json()
@@ -167,12 +180,12 @@ async def test_calculate_emissions_no_matching_factor(test_async_client):
 @pytest.mark.asyncio
 async def test_calculate_emissions_invalid_activity_id(test_async_client):
     """Test calculating emissions with invalid activity ID."""
-    from uuid import uuid4
-
     fake_id = uuid4()
     payload = {"activity_ids": [str(fake_id)], "recalculate": False}
 
-    response = await test_async_client.post("/api/v1/calculations/calculate", json=payload)
+    response = await test_async_client.post(
+        "/api/v1/calculations/calculate", json=payload
+    )
     assert response.status_code == 200
 
     data = response.json()
@@ -192,7 +205,9 @@ async def test_calculate_emissions_confidence_score(test_async_client):
 
     payload = {"activity_ids": [str(activity.id)], "recalculate": False}
 
-    response = await test_async_client.post("/api/v1/calculations/calculate", json=payload)
+    response = await test_async_client.post(
+        "/api/v1/calculations/calculate", json=payload
+    )
     assert response.status_code == 200
 
     data = response.json()
@@ -214,7 +229,9 @@ async def test_calculate_emissions_metadata(test_async_client):
 
     payload = {"activity_ids": [str(activity.id)], "recalculate": False}
 
-    response = await test_async_client.post("/api/v1/calculations/calculate", json=payload)
+    response = await test_async_client.post(
+        "/api/v1/calculations/calculate", json=payload
+    )
     assert response.status_code == 200
 
     data = response.json()

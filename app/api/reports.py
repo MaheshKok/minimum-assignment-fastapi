@@ -3,13 +3,19 @@ Emissions Reports API router.
 
 Generate comprehensive emission reports.
 """
+
 import logging
+from datetime import date as today_date
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db_session
-from app.pydantic_models.calculation import EmissionReportResponse
+from app.database.schemas import EmissionFactorDBModel, EmissionResultDBModel
+from app.pydantic_models.calculation import EmissionReportResponse, EmissionSummary
+from app.utils.constants import Scope
 
 router = APIRouter(
     prefix="/api/v1/reports",
@@ -39,24 +45,13 @@ async def generate_emissions_report(
         GET /api/v1/reports/emissions
         ```
     """
-    from datetime import date as today_date
-    from decimal import Decimal
-
-    from sqlalchemy import select
-
-    from app.database.schemas import EmissionFactorDBModel, EmissionResultDBModel
-    from app.pydantic_models.calculation import EmissionSummary
-    from app.utils.constants import Scope
 
     logger.info("Generating emissions report")
 
     # Query all emission results with their factors
-    stmt = (
-        select(EmissionResultDBModel, EmissionFactorDBModel)
-        .join(
-            EmissionFactorDBModel,
-            EmissionResultDBModel.emission_factor_id == EmissionFactorDBModel.id,
-        )
+    stmt = select(EmissionResultDBModel, EmissionFactorDBModel).join(
+        EmissionFactorDBModel,
+        EmissionResultDBModel.emission_factor_id == EmissionFactorDBModel.id,
     )
     result = await session.execute(stmt)
     rows = result.all()
@@ -107,7 +102,12 @@ async def generate_emissions_report(
         # Aggregate by activity type (convert to snake_case for consistency)
         activity_type = emission_result.activity_type
         # Convert "Electricity" -> "electricity", "Purchased Goods and Services" -> "goods_services"
-        activity_type_key = activity_type.lower().replace(" ", "_").replace("purchased_", "").replace("and_", "")
+        activity_type_key = (
+            activity_type.lower()
+            .replace(" ", "_")
+            .replace("purchased_", "")
+            .replace("and_", "")
+        )
         if activity_type_key not in breakdown_by_type:
             breakdown_by_type[activity_type_key] = Decimal("0")
         breakdown_by_type[activity_type_key] += co2e

@@ -2,6 +2,8 @@
 API tests for emission factors endpoint following kkb_fastapi pattern.
 """
 
+from uuid import uuid4
+
 import pytest
 from sqlalchemy import select
 
@@ -79,8 +81,6 @@ async def test_get_emission_factor_by_id(test_async_client):
 @pytest.mark.asyncio
 async def test_get_emission_factor_not_found(test_async_client):
     """Test retrieving non-existent emission factor."""
-    from uuid import uuid4
-
     fake_id = uuid4()
     response = await test_async_client.get(f"/api/v1/factors/{fake_id}")
     assert response.status_code == 404

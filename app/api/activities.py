@@ -5,8 +5,9 @@ CRUD operations for activity data (Electricity, Air Travel, Goods & Services).
 """
 
 import logging
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db_session
@@ -53,9 +54,6 @@ async def get_electricity_activity(
     session: AsyncSession = Depends(get_db_session),
 ):
     """Get electricity activity by ID."""
-    from uuid import UUID
-    from fastapi import HTTPException
-
     repo = ElectricityActivityRepository(session)
     activity = await repo.get_by_id_active(UUID(activity_id))
 
@@ -94,9 +92,6 @@ async def update_electricity_activity(
     session: AsyncSession = Depends(get_db_session),
 ):
     """Update electricity activity."""
-    from uuid import UUID
-    from fastapi import HTTPException
-
     repo = ElectricityActivityRepository(session)
     activity = await repo.update(UUID(activity_id), **activity_data.model_dump())
 
@@ -116,9 +111,6 @@ async def delete_electricity_activity(
     session: AsyncSession = Depends(get_db_session),
 ):
     """Soft delete electricity activity."""
-    from uuid import UUID
-    from fastapi import HTTPException
-
     repo = ElectricityActivityRepository(session)
     activity = await repo.soft_delete(UUID(activity_id))
 

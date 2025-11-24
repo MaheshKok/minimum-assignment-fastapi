@@ -1,0 +1,40 @@
+# FastAPI and server
+fastapi==0.109.1
+uvicorn==0.22.0
+python-multipart==0.0.6
+
+# Database
+sqlalchemy==2.0.17
+asyncpg==0.27.0
+alembic==1.11.1
+psycopg2==2.9.6
+
+# Pydantic
+pydantic>=2.0.0
+
+# Configuration
+tomli==2.0.1
+python-dotenv==1.0.0
+
+# Data processing (from Django project)
+pandas==2.1.0
+numpy==1.24.0
+
+# Async support
+asyncio==3.4.3
+
+# Testing
+pytest==7.3.1
+pytest-asyncio==0.21.0
+httpx==0.24.1
+factory-boy==3.2.1
+faker==18.10.1
+
+# Logging
+logzero==1.7.0
+
+# Other utilities
+click==8.1.7
+pyyaml==6.0
+tabulate==0.9.0
+python-dateutil==2.8.2

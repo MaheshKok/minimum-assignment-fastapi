@@ -1,0 +1,36 @@
+ENVIRONMENT = "test"
+
+[db]
+host = "localhost"
+port = "5432"
+database = "minimum_emissions_test"
+username = "postgres"
+password = "postgres"
+
+[logging]
+version = 1
+disable_existing_loggers = false
+
+[logging.formatters.default]
+format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+[logging.handlers.console]
+class = "logging.StreamHandler"
+level = "DEBUG"
+formatter = "default"
+stream = "ext://sys.stdout"
+
+[logging.root]
+level = "DEBUG"
+handlers = ["console"]
+
+[api]
+title = "Carbon Emissions Calculator API"
+description = "FastAPI-based carbon emissions calculation engine"
+version = "1.0.0"
+debug = true
+
+[emission_calculation]
+fuzzy_match_threshold = 0.8
+default_confidence_score = 1.0
+decimal_precision = 4

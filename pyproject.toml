@@ -1,0 +1,71 @@
+[project]
+name = "minimum-assignment-fastapi"
+version = "1.0.0"
+description = "FastAPI-based carbon emissions calculation engine"
+authors = [{name = "Mahesh Kokare"}]
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi==0.109.1",
+    "uvicorn[standard]==0.22.0",
+    "python-multipart==0.0.6",
+    "sqlalchemy==2.0.17",
+    "asyncpg==0.27.0",
+    "alembic==1.11.1",
+    "psycopg2==2.9.6",
+    "pydantic>=2.0.0",
+    "tomli==2.0.1",
+    "python-dotenv==1.0.0",
+    "pandas==2.1.0",
+    "numpy==1.24.0",
+    "rapidfuzz==3.5.2",
+    "logzero==1.7.0",
+    "click==8.1.7",
+    "pyyaml==6.0",
+    "tabulate==0.9.0",
+    "python-dateutil==2.8.2",
+    "greenlet>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==7.3.1",
+    "pytest-asyncio==0.21.0",
+    "httpx==0.24.1",
+    "factory-boy==3.2.1",
+    "faker==18.10.1",
+    "coverage==7.2.7",
+    "ruff==0.12.5",
+    "pre-commit==3.3.2",
+    "flake8==7.3.0",
+    "flake8-bugbear",
+    "flake8-comprehensions",
+    "flake8-simplify",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.ruff]
+line-length = 100
+src = ["app"]
+lint.select = ["E", "W", "F", "I", "UP", "B", "C4", "PIE", "T20", "RUF"]
+lint.ignore = ["RUF012", "RUF006", "E501"]
+lint.fixable = ["ALL"]
+fix = true
+exclude = [".bzr", ".direnv", ".eggs", ".git", ".mypy_cache", ".venv", "venv", "alembic_migrations"]
+lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+target-version = "py310"
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "app/test"]
+python_files = ["test_*.py"]
+asyncio_mode = "auto"
+addopts = ["-v", "--tb=short"]
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["*/tests/*", "*/test/*", "*/__pycache__/*"]

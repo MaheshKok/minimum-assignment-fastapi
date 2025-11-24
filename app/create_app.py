@@ -3,13 +3,19 @@ FastAPI application factory following kkb_fastapi pattern.
 
 Creates and configures the FastAPI application instance.
 """
+
 import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import activities_router, calculations_router, factors_router, reports_router
+from app.api import (
+    activities_router,
+    calculations_router,
+    factors_router,
+    reports_router,
+)
 from app.core.config import get_config
 from app.database.base import engine_kw, get_db_url
 from app.database.session_manager.db_session import Database
@@ -59,8 +65,12 @@ def get_app(config_file: str) -> FastAPI:
     config = get_config(config_file)
 
     app = FastAPI(
-        title=config.data.get("api", {}).get("title", "Carbon Emissions Calculator API"),
-        description=config.data.get("api", {}).get("description", "FastAPI-based carbon emissions calculation engine"),
+        title=config.data.get("api", {}).get(
+            "title", "Carbon Emissions Calculator API"
+        ),
+        description=config.data.get("api", {}).get(
+            "description", "FastAPI-based carbon emissions calculation engine"
+        ),
         version=config.data.get("api", {}).get("version", "1.0.0"),
         debug=config.data.get("api", {}).get("debug", False),
         lifespan=lifespan,

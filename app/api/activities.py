@@ -3,6 +3,7 @@ Activity Data API router.
 
 CRUD operations for activity data (Electricity, Air Travel, Goods & Services).
 """
+
 import logging
 
 from fastapi import APIRouter, Depends, status
@@ -42,23 +43,29 @@ async def list_electricity_activities(
     session: AsyncSession = Depends(get_db_session),
 ):
     """List electricity activities."""
-    stmt = select(ElectricityActivityDBModel).where(
-        ElectricityActivityDBModel.is_deleted == False
-    ).offset(skip).limit(limit)
+    stmt = (
+        select(ElectricityActivityDBModel)
+        .where(ElectricityActivityDBModel.is_deleted is False)
+        .offset(skip)
+        .limit(limit)
+    )
     result = await session.execute(stmt)
     activities = result.scalars().all()
     return activities
 
 
-@router.post("/electricity", response_model=ElectricityActivityPydModel, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/electricity",
+    response_model=ElectricityActivityPydModel,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_electricity_activity(
     activity_data: ElectricityActivityCreate,
     session: AsyncSession = Depends(get_db_session),
 ):
     """Create electricity activity."""
     activity_db = ElectricityActivityDBModel(
-        **activity_data.model_dump(),
-        activity_type=ActivityType.ELECTRICITY
+        **activity_data.model_dump(), activity_type=ActivityType.ELECTRICITY
     )
     session.add(activity_db)
     await session.flush()
@@ -76,15 +83,22 @@ async def list_air_travel_activities(
     session: AsyncSession = Depends(get_db_session),
 ):
     """List air travel activities."""
-    stmt = select(AirTravelActivityDBModel).where(
-        AirTravelActivityDBModel.is_deleted == False
-    ).offset(skip).limit(limit)
+    stmt = (
+        select(AirTravelActivityDBModel)
+        .where(AirTravelActivityDBModel.is_deleted is False)
+        .offset(skip)
+        .limit(limit)
+    )
     result = await session.execute(stmt)
     activities = result.scalars().all()
     return activities
 
 
-@router.post("/air-travel", response_model=AirTravelActivityPydModel, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/air-travel",
+    response_model=AirTravelActivityPydModel,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_air_travel_activity(
     activity_data: AirTravelActivityCreate,
     session: AsyncSession = Depends(get_db_session),
@@ -119,23 +133,29 @@ async def list_goods_services_activities(
     session: AsyncSession = Depends(get_db_session),
 ):
     """List goods & services activities."""
-    stmt = select(GoodsServicesActivityDBModel).where(
-        GoodsServicesActivityDBModel.is_deleted == False
-    ).offset(skip).limit(limit)
+    stmt = (
+        select(GoodsServicesActivityDBModel)
+        .where(GoodsServicesActivityDBModel.is_deleted is False)
+        .offset(skip)
+        .limit(limit)
+    )
     result = await session.execute(stmt)
     activities = result.scalars().all()
     return activities
 
 
-@router.post("/goods-services", response_model=GoodsServicesActivityPydModel, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/goods-services",
+    response_model=GoodsServicesActivityPydModel,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_goods_services_activity(
     activity_data: GoodsServicesActivityCreate,
     session: AsyncSession = Depends(get_db_session),
 ):
     """Create goods & services activity."""
     activity_db = GoodsServicesActivityDBModel(
-        **activity_data.model_dump(),
-        activity_type=ActivityType.GOODS_SERVICES
+        **activity_data.model_dump(), activity_type=ActivityType.GOODS_SERVICES
     )
     session.add(activity_db)
     await session.flush()

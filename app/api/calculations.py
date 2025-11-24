@@ -3,6 +3,7 @@ Emissions Calculations API router.
 
 Calculate emissions for activities.
 """
+
 import logging
 
 from fastapi import APIRouter, Depends
@@ -70,7 +71,6 @@ async def calculate_emissions(
     for activity_id in request.activity_ids:
         # Try to find activity in each table
         activity = None
-        activity_type = None
 
         # Check electricity activities
         stmt = select(ElectricityActivityDBModel).where(
@@ -78,8 +78,6 @@ async def calculate_emissions(
         )
         result = await session.execute(stmt)
         activity = result.scalars().first()
-        if activity:
-            activity_type = activity.activity_type
 
         # Check air travel activities if not found
         if not activity:
@@ -88,8 +86,6 @@ async def calculate_emissions(
             )
             result = await session.execute(stmt)
             activity = result.scalars().first()
-            if activity:
-                activity_type = activity.activity_type
 
         # Check goods/services activities if not found
         if not activity:
@@ -98,8 +94,6 @@ async def calculate_emissions(
             )
             result = await session.execute(stmt)
             activity = result.scalars().first()
-            if activity:
-                activity_type = activity.activity_type
 
         if not activity:
             logger.warning(f"Activity not found: {activity_id}")
@@ -115,7 +109,9 @@ async def calculate_emissions(
             if emission_result:
                 results.append(emission_result)
         except Exception as e:
-            logger.error(f"Failed to calculate emissions for activity {activity_id}: {e}")
+            logger.error(
+                f"Failed to calculate emissions for activity {activity_id}: {e}"
+            )
             continue
 
     await session.commit()

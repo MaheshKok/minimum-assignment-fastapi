@@ -1,6 +1,7 @@
 """
 Pydantic models for Activity Data following kkb_fastapi pattern.
 """
+
 from datetime import date as DateType
 from datetime import datetime
 from decimal import Decimal
@@ -15,10 +16,14 @@ class ElectricityActivityBase(BaseModel):
     """Base electricity activity model."""
 
     date: DateType = Field(..., description="Date of activity")
-    country: str = Field(..., max_length=100, description="Country where electricity was consumed")
+    country: str = Field(
+        ..., max_length=100, description="Country where electricity was consumed"
+    )
     usage_kwh: Decimal = Field(..., ge=0, description="Electricity consumption in kWh")
     source_file: str | None = Field(None, max_length=255, description="Source CSV file")
-    raw_data: dict[str, Any] | None = Field(default_factory=dict, description="Raw CSV data")
+    raw_data: dict[str, Any] | None = Field(
+        default_factory=dict, description="Raw CSV data"
+    )
 
 
 class ElectricityActivityCreate(ElectricityActivityBase):
@@ -42,11 +47,15 @@ class GoodsServicesActivityBase(BaseModel):
     """Base goods & services activity model."""
 
     date: DateType = Field(..., description="Date of activity")
-    supplier_category: str = Field(..., max_length=200, description="Supplier industry/category")
+    supplier_category: str = Field(
+        ..., max_length=200, description="Supplier industry/category"
+    )
     spend_gbp: Decimal = Field(..., ge=0, description="Amount spent in GBP")
     description: str | None = Field(None, description="Purchase description")
     source_file: str | None = Field(None, max_length=255, description="Source CSV file")
-    raw_data: dict[str, Any] | None = Field(default_factory=dict, description="Raw CSV data")
+    raw_data: dict[str, Any] | None = Field(
+        default_factory=dict, description="Raw CSV data"
+    )
 
 
 class GoodsServicesActivityCreate(GoodsServicesActivityBase):
@@ -72,10 +81,16 @@ class AirTravelActivityBase(BaseModel):
     date: DateType = Field(..., description="Date of activity")
     distance_miles: Decimal = Field(..., ge=0, description="Distance in miles")
     distance_km: Decimal = Field(..., ge=0, description="Distance in kilometres")
-    flight_range: str = Field(..., max_length=50, description="Flight range (Short-haul, Long-haul, etc.)")
+    flight_range: str = Field(
+        ...,
+        max_length=50,
+        description="Flight range (Short-haul, Long-haul, etc.)",
+    )
     passenger_class: str = Field(..., max_length=50, description="Passenger class")
     source_file: str | None = Field(None, max_length=255, description="Source CSV file")
-    raw_data: dict[str, Any] | None = Field(default_factory=dict, description="Raw CSV data")
+    raw_data: dict[str, Any] | None = Field(
+        default_factory=dict, description="Raw CSV data"
+    )
 
 
 class AirTravelActivityCreate(BaseModel):

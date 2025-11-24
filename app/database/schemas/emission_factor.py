@@ -3,6 +3,7 @@ EmissionFactor SQLAlchemy model.
 
 Converted from Django ORM to SQLAlchemy async following kkb_fastapi pattern.
 """
+
 import uuid
 from datetime import datetime
 
@@ -35,7 +36,10 @@ class EmissionFactorDBModel(Base):
         String(200),
         nullable=False,
         index=True,
-        comment="Identifier used to match activity data (e.g., 'United Kingdom', 'Long-haul, Business class')",
+        comment=(
+            "Identifier used to match activity data "
+            "(e.g., 'United Kingdom', 'Long-haul, Business class')"
+        ),
     )
 
     unit = Column(
@@ -76,13 +80,20 @@ class EmissionFactorDBModel(Base):
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
     __table_args__ = (
         Index("ix_emission_factors_activity_scope", "activity_type", "scope"),
-        Index("ix_emission_factors_activity_lookup", "activity_type", "lookup_identifier"),
+        Index(
+            "ix_emission_factors_activity_lookup", "activity_type", "lookup_identifier"
+        ),
         {"comment": "Emission factor lookup table for CO2e calculations"},
     )
 
     def __repr__(self):
-        return f"<EmissionFactorDBModel: {self.activity_type} - {self.lookup_identifier}>"
+        return (
+            f"<EmissionFactorDBModel: {self.activity_type} - "
+            f"{self.lookup_identifier}>"
+        )

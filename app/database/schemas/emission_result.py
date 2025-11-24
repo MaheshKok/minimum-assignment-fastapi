@@ -4,6 +4,7 @@ EmissionResult SQLAlchemy model.
 Converted from Django ORM to SQLAlchemy async following kkb_fastapi pattern.
 Note: Django's GenericForeignKey is replaced with activity_type and activity_id fields.
 """
+
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
@@ -85,17 +86,24 @@ class EmissionResultDBModel(Base):
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
     __table_args__ = (
         Index("ix_emission_results_activity", "activity_type", "activity_id"),
         Index("ix_emission_results_created_desc", "created_at"),
         Index("ix_emission_results_calculation_date", "calculation_date"),
-        {"comment": "Calculated emission results linking activities to emission factors"},
+        {
+            "comment": "Calculated emission results linking activities to emission factors"
+        },
     )
 
     def __repr__(self):
-        return f"<EmissionResultDBModel: {self.co2e_tonnes} tCO2e, confidence={self.confidence_score}>"
+        return (
+            f"<EmissionResultDBModel: {self.co2e_tonnes} tCO2e, "
+            f"confidence={self.confidence_score}>"
+        )
 
     @property
     def co2e_kg(self) -> Decimal:

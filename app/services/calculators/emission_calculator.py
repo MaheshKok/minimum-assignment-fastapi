@@ -42,6 +42,7 @@ class EmissionCalculationError(Exception):
         self.activity_id = getattr(activity, "id", None)
         self.activity_type = getattr(activity, "activity_type", "Unknown")
         self.original_exception = original_exception
+        self.message = message
 
         # Build detailed error message with context
         error_msg = (
@@ -51,7 +52,8 @@ class EmissionCalculationError(Exception):
 
         if original_exception:
             error_msg += (
-                f"\nCaused by: {type(original_exception).__name__}: {original_exception}"
+                f"\nCaused by: {type(original_exception).__name__}: "
+                f"{original_exception}"
             )
 
         super().__init__(error_msg)
@@ -153,7 +155,9 @@ class EmissionCalculationService:
             )
             if raise_on_error:
                 raise EmissionCalculationError(
-                    activity, "Unexpected error during calculation", original_exception=e
+                    activity,
+                    "Unexpected error during calculation",
+                    original_exception=e,
                 ) from e
             return None
 
@@ -345,7 +349,9 @@ class EmissionCalculationService:
             }
 
         # Process batch
-        return await self.calculate_batch(pending_activities, fuzzy_threshold=fuzzy_threshold)
+        return await self.calculate_batch(
+            pending_activities, fuzzy_threshold=fuzzy_threshold
+        )
 
     async def recalculate_activity(
         self,

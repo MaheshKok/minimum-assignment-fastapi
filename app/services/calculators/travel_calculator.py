@@ -62,14 +62,19 @@ class TravelCalculator:
         )
 
         # Ensure distance_km is populated (convert from miles if needed)
-        if activity.distance_km is None or activity.distance_km == 0:
-            if activity.distance_miles is not None and activity.distance_miles > 0:
-                activity.distance_km = UnitConverter.miles_to_km(activity.distance_miles)
-                await self.session.flush()
+        if (
+            (activity.distance_km is None or activity.distance_km == 0)
+            and activity.distance_miles is not None
+            and activity.distance_miles > 0
+        ):
+            activity.distance_km = UnitConverter.miles_to_km(activity.distance_miles)
+            await self.session.flush()
 
         # Only reject if BOTH distances are None or missing
         if activity.distance_km is None and activity.distance_miles is None:
-            logger.error(f"No distance information available for air travel activity {activity.id}")
+            logger.error(
+                f"No distance information available for air travel activity {activity.id}"
+            )
             return None
 
         # If we have a zero distance, proceed with 0 emissions
@@ -114,14 +119,18 @@ class TravelCalculator:
             calculation_metadata={
                 "distance_km": str(distance),
                 "distance_miles": (
-                    str(activity.distance_miles) if activity.distance_miles is not None else None
+                    str(activity.distance_miles)
+                    if activity.distance_miles is not None
+                    else None
                 ),
                 "flight_range": activity.flight_range,
                 "passenger_class": activity.passenger_class,
                 "matched_identifier": emission_factor.lookup_identifier,
                 "emission_factor_value": str(factor),
                 "unit": emission_factor.unit,
-                "calculation_method": "exact" if confidence == Decimal("1.0") else "fuzzy",
+                "calculation_method": (
+                    "exact" if confidence == Decimal("1.0") else "fuzzy"
+                ),
             },
         )
 

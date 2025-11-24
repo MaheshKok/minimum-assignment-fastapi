@@ -3,6 +3,7 @@ Database base configuration following kkb_fastapi pattern.
 
 Handles PostgreSQL async engine creation and session management.
 """
+
 import asyncio
 import contextlib
 import functools
@@ -22,7 +23,8 @@ from app.core.config import Config
 
 engine_kw = {
     "pool_pre_ping": True,
-    # feature will normally emit SQL equivalent to "SELECT 1" each time a connection is checked out from the pool
+    # feature will normally emit SQL equivalent to "SELECT 1" each time
+    # a connection is checked out from the pool
     "pool_size": 2,  # number of connections to keep open at a time
     "max_overflow": 4,  # number of connections to allow to be opened above pool_size
     "connect_args": {
@@ -108,7 +110,8 @@ async def create_database(config: Config) -> bool:
     try:
         maintenance_engine = get_async_engine(maintenance_url)
         logging.info(
-            f"Attempting to create database '{target_database_name}' in {original_db_params_copy['host']} if it does not exist."
+            f"Attempting to create database '{target_database_name}' in "
+            f"{original_db_params_copy['host']} if it does not exist."
         )
         async with maintenance_engine.connect() as connection:
             # For PostgreSQL, CREATE DATABASE cannot run inside a transaction block.
@@ -131,7 +134,8 @@ async def create_database(config: Config) -> bool:
                 and e.orig.pgcode == "42P04"
             ):
                 logging.warning(
-                    f"Database '{target_database_name}' already exists (detected by pgcode '42P04'). No action taken."
+                    f"Database '{target_database_name}' already exists "
+                    f"(detected by pgcode '42P04'). No action taken."
                 )
                 return False  # Database already existed
 
@@ -142,7 +146,8 @@ async def create_database(config: Config) -> bool:
         raise
     except Exception as e:
         logging.error(
-            f"An unexpected error occurred while trying to create database '{target_database_name}': {e}"
+            f"An unexpected error occurred while trying to create "
+            f"database '{target_database_name}': {e}"
         )
         raise
     finally:

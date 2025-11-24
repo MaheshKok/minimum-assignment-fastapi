@@ -1,6 +1,7 @@
 """
 Pydantic models for Emission Calculations and Results following kkb_fastapi pattern.
 """
+
 from datetime import date as DateType
 from datetime import datetime
 from decimal import Decimal
@@ -17,9 +18,15 @@ class EmissionResultBase(BaseModel):
     activity_id: UUID = Field(..., description="ID of activity record")
     emission_factor_id: UUID = Field(..., description="ID of emission factor used")
     co2e_tonnes: Decimal = Field(..., ge=0, description="CO2e emissions in tonnes")
-    confidence_score: Decimal = Field(Decimal("1.0"), ge=0, le=1, description="Matching confidence score")
-    calculation_metadata: dict[str, Any] | None = Field(default_factory=dict, description="Calculation metadata")
-    calculation_date: DateType = Field(default_factory=DateType.today, description="Calculation date")
+    confidence_score: Decimal = Field(
+        Decimal("1.0"), ge=0, le=1, description="Matching confidence score"
+    )
+    calculation_metadata: dict[str, Any] | None = Field(
+        default_factory=dict, description="Calculation metadata"
+    )
+    calculation_date: DateType = Field(
+        default_factory=DateType.today, description="Calculation date"
+    )
 
 
 class EmissionResultCreate(EmissionResultBase):
@@ -44,8 +51,12 @@ class EmissionResultPydModel(EmissionResultBase):
 class EmissionCalculationRequest(BaseModel):
     """Request model for calculating emissions."""
 
-    activity_ids: list[UUID] = Field(..., description="List of activity IDs to calculate emissions for")
-    recalculate: bool = Field(False, description="Whether to recalculate existing results")
+    activity_ids: list[UUID] = Field(
+        ..., description="List of activity IDs to calculate emissions for"
+    )
+    recalculate: bool = Field(
+        False, description="Whether to recalculate existing results"
+    )
 
 
 class EmissionSummary(BaseModel):

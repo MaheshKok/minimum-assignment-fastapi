@@ -3,6 +3,7 @@ Activity data SQLAlchemy models.
 
 Converted from Django ORM to SQLAlchemy async following kkb_fastapi pattern.
 """
+
 import uuid
 from datetime import datetime
 
@@ -53,7 +54,9 @@ class BaseActivityMixin:
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
 
 class ElectricityActivityDBModel(Base, BaseActivityMixin):
@@ -117,13 +120,18 @@ class GoodsServicesActivityDBModel(Base, BaseActivityMixin):
     )
 
     __table_args__ = (
-        Index("ix_goods_services_activities_date_category", "date", "supplier_category"),
+        Index(
+            "ix_goods_services_activities_date_category", "date", "supplier_category"
+        ),
         Index("ix_goods_services_activities_date_desc", "date"),
         {"comment": "Purchased goods and services activity data (Scope 3, Category 1)"},
     )
 
     def __repr__(self):
-        return f"<GoodsServicesActivityDBModel: {self.supplier_category} - £{self.spend_gbp} on {self.date}>"
+        return (
+            f"<GoodsServicesActivityDBModel: {self.supplier_category} - "
+            f"£{self.spend_gbp} on {self.date}>"
+        )
 
 
 class AirTravelActivityDBModel(Base, BaseActivityMixin):
@@ -167,4 +175,7 @@ class AirTravelActivityDBModel(Base, BaseActivityMixin):
     )
 
     def __repr__(self):
-        return f"<AirTravelActivityDBModel: {self.flight_range} - {self.passenger_class} ({self.distance_km} km) on {self.date}>"
+        return (
+            f"<AirTravelActivityDBModel: {self.flight_range} - "
+            f"{self.passenger_class} ({self.distance_km} km) on {self.date}>"
+        )

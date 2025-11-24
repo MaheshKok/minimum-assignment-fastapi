@@ -5,9 +5,8 @@ Revises:
 Create Date: 2025-11-24 10:41:17.102422
 
 """
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '42a729e8af08'
@@ -39,6 +38,7 @@ def upgrade() -> None:
     op.create_index('ix_air_travel_activities_date_desc', 'air_travel_activities', ['date'], unique=False)
     op.create_index('ix_air_travel_activities_date_range', 'air_travel_activities', ['date', 'flight_range'], unique=False)
     op.create_index(op.f('ix_air_travel_activities_flight_range'), 'air_travel_activities', ['flight_range'], unique=False)
+
     op.create_table('electricity_activities',
     sa.Column('country', sa.String(length=100), nullable=False, comment='Country where electricity was consumed'),
     sa.Column('usage_kwh', sa.Numeric(precision=12, scale=4), nullable=False, comment='Electricity consumption in kilowatt-hours'),
@@ -58,6 +58,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_electricity_activities_date'), 'electricity_activities', ['date'], unique=False)
     op.create_index('ix_electricity_activities_date_country', 'electricity_activities', ['date', 'country'], unique=False)
     op.create_index('ix_electricity_activities_date_desc', 'electricity_activities', ['date'], unique=False)
+
     op.create_table('emission_factors',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('activity_type', sa.String(length=100), nullable=False, comment='Type of activity this emission factor applies to'),
@@ -77,6 +78,7 @@ def upgrade() -> None:
     op.create_index('ix_emission_factors_activity_scope', 'emission_factors', ['activity_type', 'scope'], unique=False)
     op.create_index(op.f('ix_emission_factors_activity_type'), 'emission_factors', ['activity_type'], unique=False)
     op.create_index(op.f('ix_emission_factors_lookup_identifier'), 'emission_factors', ['lookup_identifier'], unique=False)
+
     op.create_table('goods_services_activities',
     sa.Column('supplier_category', sa.String(length=200), nullable=False, comment='Industry or category of the supplier'),
     sa.Column('spend_gbp', sa.Numeric(precision=12, scale=2), nullable=False, comment='Amount spent in GBP'),
@@ -97,6 +99,7 @@ def upgrade() -> None:
     op.create_index('ix_goods_services_activities_date_category', 'goods_services_activities', ['date', 'supplier_category'], unique=False)
     op.create_index('ix_goods_services_activities_date_desc', 'goods_services_activities', ['date'], unique=False)
     op.create_index(op.f('ix_goods_services_activities_supplier_category'), 'goods_services_activities', ['supplier_category'], unique=False)
+
     op.create_table('emission_results',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('activity_type', sa.String(length=100), nullable=False, comment='Type of activity data (Electricity, Air Travel, Purchased Goods and Services)'),

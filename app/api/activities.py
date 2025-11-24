@@ -47,6 +47,27 @@ async def list_electricity_activities(
     return activities
 
 
+@router.get("/electricity/{activity_id}", response_model=ElectricityActivityPydModel)
+async def get_electricity_activity(
+    activity_id: str,
+    session: AsyncSession = Depends(get_db_session),
+):
+    """Get electricity activity by ID."""
+    from uuid import UUID
+    from fastapi import HTTPException
+
+    repo = ElectricityActivityRepository(session)
+    activity = await repo.get_by_id_active(UUID(activity_id))
+
+    if not activity:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Electricity activity {activity_id} not found",
+        )
+
+    return activity
+
+
 @router.post(
     "/electricity",
     response_model=ElectricityActivityPydModel,
@@ -64,6 +85,50 @@ async def create_electricity_activity(
 
     logger.info(f"Created electricity activity: {activity_db.id}")
     return activity_db
+
+
+@router.put("/electricity/{activity_id}", response_model=ElectricityActivityPydModel)
+async def update_electricity_activity(
+    activity_id: str,
+    activity_data: ElectricityActivityCreate,
+    session: AsyncSession = Depends(get_db_session),
+):
+    """Update electricity activity."""
+    from uuid import UUID
+    from fastapi import HTTPException
+
+    repo = ElectricityActivityRepository(session)
+    activity = await repo.update(UUID(activity_id), **activity_data.model_dump())
+
+    if not activity:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Electricity activity {activity_id} not found",
+        )
+
+    logger.info(f"Updated electricity activity: {activity_id}")
+    return activity
+
+
+@router.delete("/electricity/{activity_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_electricity_activity(
+    activity_id: str,
+    session: AsyncSession = Depends(get_db_session),
+):
+    """Soft delete electricity activity."""
+    from uuid import UUID
+    from fastapi import HTTPException
+
+    repo = ElectricityActivityRepository(session)
+    activity = await repo.soft_delete(UUID(activity_id))
+
+    if not activity:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Electricity activity {activity_id} not found",
+        )
+
+    logger.info(f"Deleted electricity activity: {activity_id}")
 
 
 # Air Travel Activities

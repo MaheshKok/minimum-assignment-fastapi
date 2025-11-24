@@ -29,13 +29,29 @@ logger = logging.getLogger(__name__)
 async def list_emission_factors(
     skip: int = 0,
     limit: int = 100,
+    activity_type: str | None = None,
+    scope: int | None = None,
     session: AsyncSession = Depends(get_db_session),
 ):
     """
-    List all emission factors with pagination.
+    List all emission factors with pagination and optional filtering.
+
+    Args:
+        skip: Number of records to skip
+        limit: Maximum number of records to return
+        activity_type: Filter by activity type (optional)
+        scope: Filter by GHG scope (optional)
     """
     repo = EmissionFactorRepository(session)
-    factors = await repo.get_all(skip=skip, limit=limit)
+
+    # Apply filters if provided
+    if activity_type:
+        factors = await repo.get_by_activity_type(activity_type, skip=skip, limit=limit)
+    elif scope is not None:
+        factors = await repo.get_by_scope(scope, skip=skip, limit=limit)
+    else:
+        factors = await repo.get_all(skip=skip, limit=limit)
+
     return factors
 
 

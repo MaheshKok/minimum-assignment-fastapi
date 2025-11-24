@@ -104,11 +104,13 @@ async def generate_emissions_report(
             elif emission_factor.category == 6:
                 scope_3_category_6 += co2e
 
-        # Aggregate by activity type
+        # Aggregate by activity type (convert to snake_case for consistency)
         activity_type = emission_result.activity_type
-        if activity_type not in breakdown_by_type:
-            breakdown_by_type[activity_type] = Decimal("0")
-        breakdown_by_type[activity_type] += co2e
+        # Convert "Electricity" -> "electricity", "Purchased Goods and Services" -> "goods_services"
+        activity_type_key = activity_type.lower().replace(" ", "_").replace("purchased_", "").replace("and_", "")
+        if activity_type_key not in breakdown_by_type:
+            breakdown_by_type[activity_type_key] = Decimal("0")
+        breakdown_by_type[activity_type_key] += co2e
 
     # Create summary
     summary = EmissionSummary(

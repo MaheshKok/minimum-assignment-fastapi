@@ -84,7 +84,7 @@ class GoodsServicesActivityFactory(AsyncSQLAlchemyFactory):
     id = factory.LazyFunction(uuid.uuid4)
     activity_type = ActivityType.GOODS_SERVICES
     date = factory.LazyFunction(date.today)
-    supplier_category = factory.Sequence(lambda n: f"Test Category {n}")
+    supplier_category = factory.Sequence(lambda n: f"Category {n}")
     spend_gbp = Decimal("5000.0")
     description = factory.Sequence(lambda n: f"Test purchase {n}")
     source_file = None

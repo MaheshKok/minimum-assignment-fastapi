@@ -16,17 +16,17 @@ format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
 [logging.handlers.console]
 class = "logging.StreamHandler"
-level = "DEBUG"
+level = "INFO"
 formatter = "default"
 stream = "ext://sys.stdout"
 
 [logging.root]
-level = "DEBUG"
+level = "INFO"
 handlers = ["console"]
 
 [api]
-title = "Carbon Emissions Calculator API"
-description = "FastAPI-based carbon emissions calculation engine"
+title = "Carbon Emissions Calculator API - Test"
+description = "FastAPI-based carbon emissions calculation engine - Test Environment"
 version = "1.0.0"
 debug = true
 

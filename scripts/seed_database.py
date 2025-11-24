@@ -28,6 +28,11 @@ from pathlib import Path
 # Add parent directory to path so we can import app modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
+
 from app.core.config import get_config
 from app.database.base import engine_kw, get_db_url
 from app.database.session_manager.db_session import Database
@@ -41,38 +46,89 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Create Rich console
+console = Console()
 
-def print_header(text: str):
-    """Print a formatted header."""
-    print(f"\n{'=' * 60}")
-    print(f"  {text}")
-    print(f"{'=' * 60}\n")
+
+def print_header(text: str, style: str = "bold cyan"):
+    """Print a formatted header using Rich Panel."""
+    console.print(
+        Panel(
+            Text(text, justify="center", style=style),
+            border_style="cyan",
+            padding=(1, 2),
+        )
+    )
+
+
+def print_config(args):
+    """Print configuration details."""
+    config_table = Table(show_header=False, box=None, padding=(0, 2))
+    config_table.add_column("Setting", style="bold yellow")
+    config_table.add_column("Value", style="green")
+
+    config_table.add_row("📁 Data Directory", args.data_dir)
+    config_table.add_row("🗑️  Clear Existing", "Yes" if args.clear else "No")
+    config_table.add_row(
+        "🧮 Skip Calculations", "Yes" if args.skip_calculations else "No"
+    )
+
+    console.print(config_table)
+    console.print()
 
 
 def print_stats(stats: dict):
-    """Print seeding statistics."""
-    print_header("SEEDING STATISTICS")
+    """Print seeding statistics using Rich Table."""
+    print_header("SEEDING STATISTICS", "bold green")
 
-    print(f"📊 Emission Factors:       {stats['emission_factors']}")
-    print(f"⚡ Electricity Activities:  {stats['electricity_activities']}")
-    print(f"✈️  Air Travel Activities:   {stats['air_travel_activities']}")
-    print(f"📦 Goods/Services Activities: {stats['goods_services_activities']}")
-    print(f"🧮 Emission Results:       {stats['emission_results']}")
+    # Main statistics table
+    stats_table = Table(show_header=True, box=None, padding=(0, 2))
+    stats_table.add_column("Category", style="bold cyan", width=30)
+    stats_table.add_column("Count", justify="right", style="bold green")
 
-    if stats.get("errors"):
-        print(f"\n⚠️  Errors: {len(stats['errors'])}")
-        for error in stats["errors"][:5]:  # Show first 5 errors
-            print(f"   - {error}")
-        if len(stats["errors"]) > 5:
-            print(f"   ... and {len(stats['errors']) - 5} more")
+    stats_table.add_row("📊 Emission Factors", str(stats["emission_factors"]))
+    stats_table.add_row(
+        "⚡ Electricity Activities", str(stats["electricity_activities"])
+    )
+    stats_table.add_row("✈️  Air Travel Activities", str(stats["air_travel_activities"]))
+    stats_table.add_row(
+        "📦 Goods/Services Activities", str(stats["goods_services_activities"])
+    )
+    stats_table.add_row("🧮 Emission Results", str(stats["emission_results"]))
 
+    console.print(stats_table)
+    console.print()
+
+    # Calculate totals
     total_activities = (
         stats["electricity_activities"]
         + stats["air_travel_activities"]
         + stats["goods_services_activities"]
     )
-    print(f"\n📈 Total Activities:       {total_activities}")
-    print()
+
+    # Summary panel
+    summary = Table(show_header=False, box=None, padding=(0, 2))
+    summary.add_column("Label", style="bold yellow")
+    summary.add_column("Value", style="bold magenta")
+    summary.add_row("📈 Total Activities", str(total_activities))
+
+    console.print(summary)
+
+    # Show errors if any
+    if stats.get("errors"):
+        console.print()
+        console.print(
+            Panel(
+                f"[yellow]⚠️  {len(stats['errors'])} errors occurred during seeding[/yellow]",
+                border_style="yellow",
+            )
+        )
+        for i, error in enumerate(stats["errors"][:5], 1):
+            console.print(f"  {i}. [dim]{error}[/dim]")
+        if len(stats["errors"]) > 5:
+            console.print(f"  [dim]... and {len(stats['errors']) - 5} more[/dim]")
+
+    console.print()
 
 
 async def main():
@@ -99,11 +155,9 @@ async def main():
 
     args = parser.parse_args()
 
-    print_header("DATABASE SEEDING")
-    print(f"Data Directory: {args.data_dir}")
-    print(f"Clear Existing: {args.clear}")
-    print(f"Skip Calculations: {args.skip_calculations}")
-    print()
+    # Print beautiful header
+    print_header("DATABASE SEEDING", "bold cyan")
+    print_config(args)
 
     try:
         # Initialize database
@@ -112,21 +166,44 @@ async def main():
         Database.init(async_db_url, engine_kw=engine_kw)
         logger.info("Database initialized")
 
-        async with DatabaseSeeder(data_dir=args.data_dir) as seeder:
-            logger.info("Starting database seeding")
+        # Start seeding with progress indication
+        with console.status(
+            "[bold cyan]Seeding database...", spinner="dots"
+        ) as status:
+            async with DatabaseSeeder(data_dir=args.data_dir) as seeder:
+                logger.info("Starting database seeding")
 
-            stats = await seeder.seed_all(
-                clear_existing=args.clear,
-                skip_calculations=args.skip_calculations,
+                # Update status for different phases
+                status.update("[bold yellow]Loading emission factors...")
+                stats = await seeder.seed_all(
+                    clear_existing=args.clear,
+                    skip_calculations=args.skip_calculations,
+                )
+
+        # Print beautiful statistics
+        print_stats(stats)
+
+        # Success message
+        console.print(
+            Panel(
+                Text("✅ SEEDING COMPLETED SUCCESSFULLY", justify="center"),
+                border_style="bold green",
+                style="bold green",
             )
-
-            print_stats(stats)
-            print_header("✅ SEEDING COMPLETED SUCCESSFULLY")
+        )
 
     except Exception as e:
         logger.error(f"Seeding failed: {e}", exc_info=True)
-        print_header("❌ SEEDING FAILED")
-        print(f"Error: {e}\n")
+
+        # Error message
+        console.print()
+        console.print(
+            Panel(
+                f"[bold red]❌ SEEDING FAILED[/bold red]\n\n[red]{str(e)}[/red]",
+                border_style="bold red",
+            )
+        )
+        console.print()
         sys.exit(1)
 
 

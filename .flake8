@@ -1,0 +1,14 @@
+[flake8]
+max-line-length = 100
+extend-ignore = E203, W503, B008, B042
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    .bzr,
+    .direnv,
+    .eggs,
+    .mypy_cache
+per-file-ignores =
+    alembic_migrations/*:E501,E122,E128

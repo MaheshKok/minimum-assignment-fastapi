@@ -1,0 +1,98 @@
+Activity,Lookup identifiers,Unit,CO2e,Scope,Category
+Air Travel,"Domestic, Average Passenger",kilometres,0.02691,3,6
+Air Travel,"Short-haul, Average Passenger",kilometres,0.01681,3,6
+Air Travel,"Short-haul, Economy class",kilometres,0.01654,3,6
+Air Travel,"Short-haul, Business class",kilometres,0.0248,3,6
+Air Travel,"Long-haul, Average passenger",kilometres,0.02114,3,6
+Air Travel,"Long-haul, Economy class",kilometres,0.01619,3,6
+Air Travel,"Long-haul, Premium Economy class",kilometres,0.02591,3,6
+Air Travel,"Long-haul, Business class",kilometres,0.04696,3,6
+Air Travel,"Long-haul, First class",kilometres,0.06477,3,6
+Air Travel,"International, Average passenger",kilometres,0.02011,3,6
+Air Travel,"International, Economy class",kilometres,0.0154,3,6
+Air Travel,"International, Premium Economy class",kilometres,0.02464,3,6
+Air Travel,"International, Business class",kilometres,0.04466,3,6
+Air Travel,"International, First class",kilometres,0.06159,3,6
+Purchased Goods and Services,"Crop and animal production, hunting and related service activities",GBP,0.841,3,1
+Purchased Goods and Services,Forestry and logging,GBP,0.808,3,1
+Purchased Goods and Services,Fishing and aquaculture,GBP,1.395,3,1
+Purchased Goods and Services,Mining and quarrying,GBP,0.855,3,1
+Purchased Goods and Services,"Manufacture of food products, beverages and tobacco products",GBP,0.766,3,1
+Purchased Goods and Services,"Manufacture of textiles, wearing apparel and leather products",GBP,0.59,3,1
+Purchased Goods and Services,"Manufacture of wood and of products of wood and cork, except furniture; manufacture of articles of straw and plaiting materials",GBP,0.769,3,1
+Purchased Goods and Services,Manufacture of paper and paper products,GBP,1.24,3,1
+Purchased Goods and Services,Printing and reproduction of recorded media,GBP,0.604,3,1
+Purchased Goods and Services,Manufacture of coke and refined petroleum products,GBP,1.675,3,1
+Purchased Goods and Services,Manufacture of chemicals and chemical products,GBP,1.319,3,1
+Purchased Goods and Services,Manufacture of basic pharmaceutical products and pharmaceutical preparations,GBP,0.295,3,1
+Purchased Goods and Services,Manufacture of rubber and plastic products,GBP,0.933,3,1
+Purchased Goods and Services,Manufacture of other non-metallic mineral products,GBP,2.032,3,1
+Purchased Goods and Services,Manufacture of basic metals,GBP,2.523,3,1
+Purchased Goods and Services,"Manufacture of fabricated metal products, except machinery and equipment",GBP,0.821,3,1
+Purchased Goods and Services,"Manufacture of computer, electronic and optical products",GBP,0.492,3,1
+Purchased Goods and Services,Manufacture of electrical equipment,GBP,0.765,3,1
+Purchased Goods and Services,Manufacture of machinery and equipment n.e.c.,GBP,0.708,3,1
+Purchased Goods and Services,"Manufacture of motor vehicles, trailers and semi-trailers",GBP,0.792,3,1
+Purchased Goods and Services,Manufacture of other transport equipment,GBP,0.638,3,1
+Purchased Goods and Services,Manufacture of furniture; other manufacturing,GBP,0.536,3,1
+Purchased Goods and Services,Repair and installation of machinery and equipment,GBP,0.435,3,1
+Purchased Goods and Services,"Electricity, gas, steam and air conditioning supply",GBP,3.264,3,1
+Purchased Goods and Services,"Water collection, treatment and supply",GBP,0.48,3,1
+Purchased Goods and Services,"Sewerage; waste collection, treatment and disposal activities; materials recovery; remediation activities and other waste management services",GBP,0.383,3,1
+Purchased Goods and Services,Construction,GBP,0.48,3,1
+Purchased Goods and Services,Wholesale and retail trade and repair of motor vehicles and motorcycles,GBP,0.307,3,1
+Purchased Goods and Services,"Wholesale trade, except of motor vehicles and motorcycles",GBP,0.411,3,1
+Purchased Goods and Services,"Retail trade, except of motor vehicles and motorcycles",GBP,0.266,3,1
+Purchased Goods and Services,Land transport and transport via pipelines,GBP,0.673,3,1
+Purchased Goods and Services,Water transport,GBP,1.613,3,1
+Purchased Goods and Services,Air transport,GBP,2.53,3,1
+Purchased Goods and Services,Warehousing and support activities for transportation,GBP,0.364,3,1
+Purchased Goods and Services,Postal and courier activities,GBP,0.526,3,1
+Purchased Goods and Services,Accommodation and food service activities,GBP,0.35,3,1
+Purchased Goods and Services,Publishing activities,GBP,0.286,3,1
+Purchased Goods and Services,"Motion picture, video and television programme production, sound recording and music publishing activities; programming and broadcasting activities",GBP,0.195,3,1
+Purchased Goods and Services,Telecommunications,GBP,0.283,3,1
+Purchased Goods and Services,"Computer programming, consultancy and related activities; information service activities",GBP,0.157,3,1
+Purchased Goods and Services,"Financial service activities, except insurance and pension funding",GBP,0.207,3,1
+Purchased Goods and Services,"Insurance, reinsurance and pension funding, except compulsory social security",GBP,0.21,3,1
+Purchased Goods and Services,Activities auxiliary to financial services and insurance activities,GBP,0.179,3,1
+Purchased Goods and Services,Real estate activities,GBP,0.101,3,1
+Purchased Goods and Services,Legal and accounting activities; activities of head offices; management consultancy activities,GBP,0.136,3,1
+Purchased Goods and Services,Architectural and engineering activities; technical testing and analysis,GBP,0.174,3,1
+Purchased Goods and Services,Scientific research and development,GBP,0.185,3,1
+Purchased Goods and Services,Advertising and market research,GBP,0.205,3,1
+Purchased Goods and Services,"Other professional, scientific and technical activities; veterinary activities",GBP,0.186,3,1
+Purchased Goods and Services,Administrative and support service activities,GBP,0.224,3,1
+Purchased Goods and Services,Public administration and defence; compulsory social security,GBP,0.257,3,1
+Purchased Goods and Services,Education,GBP,0.155,3,1
+Purchased Goods and Services,Human health and social work activities,GBP,0.266,3,1
+Purchased Goods and Services,Other service activities,GBP,0.183,3,1
+Purchased Goods and Services,Activities of households as employers; undifferentiated goods- and services-producing activities of households for own use,GBP,0.013,3,1
+Electricity,Austria,kWh,0.082,2,
+Electricity,Belgium,kWh,0.161,2,
+Electricity,Bulgaria,kWh,0.410,2,
+Electricity,Croatia,kWh,0.134,2,
+Electricity,Cyprus,kWh,0.621,2,
+Electricity,Czechia,kWh,0.437,2,
+Electricity,Denmark,kWh,0.109,2,
+Electricity,Estonia,kWh,0.775,2,
+Electricity,Finland,kWh,0.069,2,
+Electricity,France,kWh,0.051,2,
+Electricity,Germany,kWh,0.311,2,
+Electricity,Greece,kWh,0.479,2,
+Electricity,Hungary,kWh,0.216,2,
+Electricity,Ireland,kWh,0.279,2,
+Electricity,Italy,kWh,0.213,2,
+Electricity,Latvia,kWh,0.107,2,
+Electricity,Lithuania,kWh,0.045,2,
+Electricity,Luxembourg,kWh,0.059,2,
+Electricity,Malta,kWh,0.379,2,
+Electricity,Netherlands,kWh,0.328,2,
+Electricity,Poland,kWh,0.710,2,
+Electricity,Portugal,kWh,0.198,2,
+Electricity,Romania,kWh,0.300,2,
+Electricity,Slovakia,kWh,0.102,2,
+Electricity,Slovenia,kWh,0.218,2,
+Electricity,Spain,kWh,0.156,2,
+Electricity,Sweden,kWh,0.009,2,
+Electricity,United Kingdom,kWh,0.193,2,

@@ -1,7 +1,7 @@
 """Initial migration - emission models
 
 Revision ID: 42a729e8af08
-Revises: 
+Revises:
 Create Date: 2025-11-24 10:41:17.102422
 
 """

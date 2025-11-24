@@ -6,7 +6,7 @@ Coordinates all calculator services and provides unified interface.
 
 import logging
 from decimal import Decimal
-from typing import Any, List, Optional, Union
+from typing import Any, Union
 from uuid import UUID
 
 from sqlalchemy import select
@@ -36,7 +36,7 @@ class EmissionCalculationError(Exception):
     """
 
     def __init__(
-        self, activity, message: str, original_exception: Optional[Exception] = None
+        self, activity, message: str, original_exception: Exception | None = None
     ):
         self.activity = activity
         self.activity_id = getattr(activity, "id", None)
@@ -84,7 +84,7 @@ class EmissionCalculationService:
         activity: ActivityInstance,
         fuzzy_threshold: int = 80,
         raise_on_error: bool = False,
-    ) -> Optional[EmissionResultDBModel]:
+    ) -> EmissionResultDBModel | None:
         """
         Calculate emissions for a single activity.
 
@@ -159,7 +159,7 @@ class EmissionCalculationService:
 
     async def calculate_batch(
         self,
-        activities: List[ActivityInstance],
+        activities: list[ActivityInstance],
         fuzzy_threshold: int = 80,
         fail_fast: bool = False,
     ) -> dict[str, Any]:
@@ -351,7 +351,7 @@ class EmissionCalculationService:
         self,
         activity: ActivityInstance,
         fuzzy_threshold: int = 80,
-    ) -> Optional[EmissionResultDBModel]:
+    ) -> EmissionResultDBModel | None:
         """
         Recalculate emissions for an activity (deletes old result first).
 
@@ -397,7 +397,7 @@ class EmissionCalculationService:
         activity_id: UUID,
         fuzzy_threshold: int = 80,
         recalculate: bool = False,
-    ) -> Optional[EmissionResultDBModel]:
+    ) -> EmissionResultDBModel | None:
         """
         Calculate emissions for an activity by type and ID.
 

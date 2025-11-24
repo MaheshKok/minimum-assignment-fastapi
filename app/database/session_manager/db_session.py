@@ -4,12 +4,10 @@ Database session manager following kkb_fastapi pattern.
 Provides async context manager for database sessions.
 """
 import logging
-from typing import Optional
 
 from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import QueuePool
 
 
 class Database:
@@ -24,7 +22,7 @@ class Database:
             result = await session.execute(select(Model))
     """
 
-    _async_session_maker: Optional[sessionmaker] = None
+    _async_session_maker: sessionmaker | None = None
 
     @classmethod
     def init(cls, async_db_url: URL, engine_kw: dict = None):
@@ -52,7 +50,7 @@ class Database:
             raise RuntimeError(
                 "Database not initialized. Call Database.init() first."
             )
-        self.session: Optional[AsyncSession] = None
+        self.session: AsyncSession | None = None
 
     async def __aenter__(self) -> AsyncSession:
         """

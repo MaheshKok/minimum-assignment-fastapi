@@ -5,9 +5,8 @@ Converted from Django ORM to SQLAlchemy async following kkb_fastapi pattern.
 """
 import uuid
 from datetime import datetime
-from decimal import Decimal
 
-from sqlalchemy import Column, DateTime, Integer, Numeric, String, Index
+from sqlalchemy import Column, DateTime, Index, Integer, Numeric, String
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.database import Base

@@ -4,13 +4,12 @@ Selectors for EmissionFactor queries - async version.
 Provides optimized query methods for retrieving emission factors.
 Converted from Django ORM to SQLAlchemy async.
 """
-from typing import List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.schemas import EmissionFactorDBModel
-from app.utils.constants import ActivityType, Scope
+from app.utils.constants import Scope
 
 
 class EmissionFactorSelector:
@@ -24,13 +23,13 @@ class EmissionFactorSelector:
         """Initialize selector with database session."""
         self.session = session
 
-    async def get_all(self) -> List[EmissionFactorDBModel]:
+    async def get_all(self) -> list[EmissionFactorDBModel]:
         """Get all emission factors."""
         stmt = select(EmissionFactorDBModel)
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_by_activity_type(self, activity_type: str) -> List[EmissionFactorDBModel]:
+    async def get_by_activity_type(self, activity_type: str) -> list[EmissionFactorDBModel]:
         """
         Get all emission factors for a specific activity type.
 
@@ -46,7 +45,7 @@ class EmissionFactorSelector:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_by_scope(self, scope: int) -> List[EmissionFactorDBModel]:
+    async def get_by_scope(self, scope: int) -> list[EmissionFactorDBModel]:
         """
         Get all emission factors for a specific GHG scope.
 
@@ -60,15 +59,15 @@ class EmissionFactorSelector:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_scope_2_factors(self) -> List[EmissionFactorDBModel]:
+    async def get_scope_2_factors(self) -> list[EmissionFactorDBModel]:
         """Get all Scope 2 emission factors."""
         return await self.get_by_scope(Scope.SCOPE_2)
 
-    async def get_scope_3_factors(self) -> List[EmissionFactorDBModel]:
+    async def get_scope_3_factors(self) -> list[EmissionFactorDBModel]:
         """Get all Scope 3 emission factors."""
         return await self.get_by_scope(Scope.SCOPE_3)
 
-    async def get_by_category(self, category: int) -> List[EmissionFactorDBModel]:
+    async def get_by_category(self, category: int) -> list[EmissionFactorDBModel]:
         """
         Get emission factors by Scope 3 category.
 
@@ -85,7 +84,7 @@ class EmissionFactorSelector:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def search_by_identifier(self, search_term: str) -> List[EmissionFactorDBModel]:
+    async def search_by_identifier(self, search_term: str) -> list[EmissionFactorDBModel]:
         """
         Search emission factors by lookup identifier.
 

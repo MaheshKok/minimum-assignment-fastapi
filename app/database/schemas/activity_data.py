@@ -4,14 +4,12 @@ Activity data SQLAlchemy models.
 Converted from Django ORM to SQLAlchemy async following kkb_fastapi pattern.
 """
 import uuid
-from datetime import datetime, date
-from decimal import Decimal
+from datetime import datetime
 
-from sqlalchemy import Column, Date, DateTime, Numeric, String, JSON, Boolean, Index
+from sqlalchemy import JSON, Boolean, Column, Date, DateTime, Index, Numeric, String
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.database import Base
-from app.utils.constants import MILES_TO_KM
 
 
 class BaseActivityMixin:

@@ -3,15 +3,14 @@ FastAPI application factory following kkb_fastapi pattern.
 
 Creates and configures the FastAPI application instance.
 """
-import asyncio
 import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import factors_router, activities_router, calculations_router, reports_router
-from app.core.config import Config, get_config
+from app.api import activities_router, calculations_router, factors_router, reports_router
+from app.core.config import get_config
 from app.database.base import engine_kw, get_db_url
 from app.database.session_manager.db_session import Database
 

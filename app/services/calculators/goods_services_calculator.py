@@ -6,7 +6,6 @@ Calculates CO2e emissions from purchased goods and services.
 
 import logging
 from decimal import Decimal
-from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -34,7 +33,7 @@ class GoodsServicesCalculator:
         self,
         activity: GoodsServicesActivityDBModel,
         fuzzy_threshold: int = 80,
-    ) -> Optional[EmissionResultDBModel]:
+    ) -> EmissionResultDBModel | None:
         """
         Calculate CO2e emissions from goods/services activity.
 

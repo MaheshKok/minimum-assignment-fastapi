@@ -6,7 +6,6 @@ Calculates CO2e emissions from electricity consumption.
 
 import logging
 from decimal import Decimal
-from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -34,7 +33,7 @@ class ElectricityCalculator:
         self,
         activity: ElectricityActivityDBModel,
         fuzzy_threshold: int = 80,
-    ) -> Optional[EmissionResultDBModel]:
+    ) -> EmissionResultDBModel | None:
         """
         Calculate CO2e emissions from electricity activity.
 

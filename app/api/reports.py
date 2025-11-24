@@ -39,10 +39,12 @@ async def generate_emissions_report(
         GET /api/v1/reports/emissions
         ```
     """
-    from decimal import Decimal
     from datetime import date as today_date
-    from sqlalchemy import select, func
-    from app.database.schemas import EmissionResultDBModel, EmissionFactorDBModel
+    from decimal import Decimal
+
+    from sqlalchemy import select
+
+    from app.database.schemas import EmissionFactorDBModel, EmissionResultDBModel
     from app.pydantic_models.calculation import EmissionSummary
     from app.utils.constants import Scope
 

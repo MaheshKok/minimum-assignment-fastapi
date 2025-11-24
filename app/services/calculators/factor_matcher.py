@@ -7,8 +7,6 @@ Converted from Django ORM to SQLAlchemy async.
 
 import logging
 from decimal import Decimal
-from functools import lru_cache
-from typing import Optional, Tuple
 
 from rapidfuzz import fuzz, process
 from sqlalchemy import select
@@ -43,7 +41,7 @@ class FactorMatcher:
         self,
         activity_type: str,
         lookup_identifier: str,
-    ) -> Optional[EmissionFactorDBModel]:
+    ) -> EmissionFactorDBModel | None:
         """
         Find exact emission factor match.
 
@@ -78,7 +76,7 @@ class FactorMatcher:
         activity_type: str,
         lookup_identifier: str,
         threshold: int = DEFAULT_THRESHOLD,
-    ) -> Optional[Tuple[EmissionFactorDBModel, Decimal]]:
+    ) -> tuple[EmissionFactorDBModel, Decimal] | None:
         """
         Find emission factor using fuzzy matching.
 
@@ -144,7 +142,7 @@ class FactorMatcher:
         activity_type: str,
         lookup_identifier: str,
         threshold: int = DEFAULT_THRESHOLD,
-    ) -> Optional[Tuple[EmissionFactorDBModel, Decimal]]:
+    ) -> tuple[EmissionFactorDBModel, Decimal] | None:
         """
         Match emission factor with exact match first, then fuzzy fallback.
 
@@ -179,7 +177,7 @@ class FactorMatcher:
         flight_range: str,
         passenger_class: str,
         threshold: int = DEFAULT_THRESHOLD,
-    ) -> Optional[Tuple[EmissionFactorDBModel, Decimal]]:
+    ) -> tuple[EmissionFactorDBModel, Decimal] | None:
         """
         Match emission factor for air travel.
 

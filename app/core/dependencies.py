@@ -1,7 +1,7 @@
 """
 FastAPI dependency injection functions following kkb_fastapi pattern.
 """
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession
 

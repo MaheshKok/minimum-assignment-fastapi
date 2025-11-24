@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# encoding: utf-8
 """
 Configuration management following kkb_fastapi pattern.
 

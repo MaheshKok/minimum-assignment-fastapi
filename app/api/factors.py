@@ -4,7 +4,6 @@ Emission Factors API router.
 CRUD operations for emission factors.
 """
 import logging
-from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -14,8 +13,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies import get_db_session
 from app.database.schemas import EmissionFactorDBModel
 from app.pydantic_models.emission_factor import (
-    EmissionFactorPydModel,
     EmissionFactorCreate,
+    EmissionFactorPydModel,
     EmissionFactorUpdate,
 )
 
@@ -27,7 +26,7 @@ router = APIRouter(
 logger = logging.getLogger(__name__)
 
 
-@router.get("/", response_model=List[EmissionFactorPydModel])
+@router.get("/", response_model=list[EmissionFactorPydModel])
 async def list_emission_factors(
     skip: int = 0,
     limit: int = 100,

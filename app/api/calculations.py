@@ -52,13 +52,14 @@ async def calculate_emissions(
         }
         ```
     """
-    from app.services.calculators.emission_calculator import EmissionCalculationService
+    from sqlalchemy import select
+
     from app.database.schemas import (
-        ElectricityActivityDBModel,
         AirTravelActivityDBModel,
+        ElectricityActivityDBModel,
         GoodsServicesActivityDBModel,
     )
-    from sqlalchemy import select
+    from app.services.calculators.emission_calculator import EmissionCalculationService
 
     logger.info(f"Calculating emissions for {len(request.activity_ids)} activities")
 

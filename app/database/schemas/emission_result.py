@@ -5,10 +5,10 @@ Converted from Django ORM to SQLAlchemy async following kkb_fastapi pattern.
 Note: Django's GenericForeignKey is replaced with activity_type and activity_id fields.
 """
 import uuid
-from datetime import datetime, date
+from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, Numeric, String, JSON, Index
+from sqlalchemy import JSON, Column, Date, DateTime, ForeignKey, Index, Numeric, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 

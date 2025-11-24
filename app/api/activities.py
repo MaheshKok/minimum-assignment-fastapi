@@ -4,29 +4,27 @@ Activity Data API router.
 CRUD operations for activity data (Electricity, Air Travel, Goods & Services).
 """
 import logging
-from typing import List
-from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db_session
 from app.database.schemas import (
-    ElectricityActivityDBModel,
     AirTravelActivityDBModel,
+    ElectricityActivityDBModel,
     GoodsServicesActivityDBModel,
 )
 from app.pydantic_models.activity import (
-    ElectricityActivityPydModel,
-    ElectricityActivityCreate,
-    AirTravelActivityPydModel,
     AirTravelActivityCreate,
-    GoodsServicesActivityPydModel,
+    AirTravelActivityPydModel,
+    ElectricityActivityCreate,
+    ElectricityActivityPydModel,
     GoodsServicesActivityCreate,
+    GoodsServicesActivityPydModel,
 )
 from app.services.calculators.unit_converter import UnitConverter
-from app.utils.constants import ActivityType, MILES_TO_KM
+from app.utils.constants import ActivityType
 
 router = APIRouter(
     prefix="/api/v1/activities",
@@ -37,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 
 # Electricity Activities
-@router.get("/electricity", response_model=List[ElectricityActivityPydModel])
+@router.get("/electricity", response_model=list[ElectricityActivityPydModel])
 async def list_electricity_activities(
     skip: int = 0,
     limit: int = 100,
@@ -71,7 +69,7 @@ async def create_electricity_activity(
 
 
 # Air Travel Activities
-@router.get("/air-travel", response_model=List[AirTravelActivityPydModel])
+@router.get("/air-travel", response_model=list[AirTravelActivityPydModel])
 async def list_air_travel_activities(
     skip: int = 0,
     limit: int = 100,
@@ -114,7 +112,7 @@ async def create_air_travel_activity(
 
 
 # Goods & Services Activities
-@router.get("/goods-services", response_model=List[GoodsServicesActivityPydModel])
+@router.get("/goods-services", response_model=list[GoodsServicesActivityPydModel])
 async def list_goods_services_activities(
     skip: int = 0,
     limit: int = 100,

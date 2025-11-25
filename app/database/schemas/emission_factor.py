@@ -28,6 +28,7 @@ class EmissionFactorDBModel(Base):
         Index(
             "ix_emission_factors_activity_lookup", "activity_type", "lookup_identifier"
         ),
+        Index("ix_emission_factors_scope_category", "scope", "category"),
         {"comment": "Emission factor lookup table for CO2e calculations"},
     )
 

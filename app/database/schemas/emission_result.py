@@ -30,6 +30,8 @@ class EmissionResultDBModel(Base):
         Index("ix_emission_results_activity", "activity_type", "activity_id"),
         Index("ix_emission_results_created_desc", "created_at"),
         Index("ix_emission_results_calculation_date", "calculation_date"),
+        Index("ix_emission_results_co2e_tonnes", "co2e_tonnes"),
+        Index("ix_emission_results_emission_factor_id", "emission_factor_id"),
         {
             "comment": "Calculated emission results linking activities to emission factors"
         },

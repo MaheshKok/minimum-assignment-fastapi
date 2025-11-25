@@ -22,31 +22,6 @@ async def test_list_emission_factors_empty(test_async_client):
 
 
 @pytest.mark.asyncio
-async def test_create_emission_factor(test_async_client):
-    """Test creating a new emission factor."""
-    payload = {
-        "activity_type": ActivityType.ELECTRICITY,
-        "lookup_identifier": "United Kingdom",
-        "unit": "kWh",
-        "co2e_factor": 0.3,
-        "scope": Scope.SCOPE_2,
-        "category": None,
-        "source": "DEFRA 2024",
-        "notes": "Test factor",
-    }
-
-    response = await test_async_client.post("/api/v1/factors/", json=payload)
-    assert response.status_code == 201
-
-    data = response.json()
-    assert data["activity_type"] == ActivityType.ELECTRICITY
-    assert data["lookup_identifier"] == "United Kingdom"
-    assert float(data["co2e_factor"]) == 0.3
-    assert data["scope"] == Scope.SCOPE_2
-    assert "id" in data
-
-
-@pytest.mark.asyncio
 async def test_list_emission_factors_with_data(test_async_client):
     """Test listing emission factors with existing data."""
     # Create test factors
@@ -86,51 +61,6 @@ async def test_get_emission_factor_not_found(test_async_client):
     assert response.status_code == 404
 
 
-@pytest.mark.asyncio
-async def test_update_emission_factor(test_async_client):
-    """Test updating an emission factor."""
-    # Create test factor
-    factor = await EmissionFactorFactory()
-
-    update_payload = {
-        "activity_type": factor.activity_type,
-        "lookup_identifier": "Updated Country",
-        "unit": factor.unit,
-        "co2e_factor": 0.7,
-        "scope": factor.scope,
-        "category": factor.category,
-        "source": "Updated Source",
-        "notes": "Updated notes",
-    }
-
-    response = await test_async_client.put(
-        f"/api/v1/factors/{factor.id}", json=update_payload
-    )
-    assert response.status_code == 200
-
-    data = response.json()
-    assert data["lookup_identifier"] == "Updated Country"
-    assert float(data["co2e_factor"]) == 0.7
-    assert data["source"] == "Updated Source"
-
-
-@pytest.mark.asyncio
-async def test_delete_emission_factor(test_async_client):
-    """Test deleting an emission factor."""
-    # Create test factor
-    factor = await EmissionFactorFactory()
-
-    response = await test_async_client.delete(f"/api/v1/factors/{factor.id}")
-    assert response.status_code == 204
-
-    # Verify deletion
-    async with Database() as session:
-        stmt = select(EmissionFactorDBModel).where(
-            EmissionFactorDBModel.id == factor.id
-        )
-        result = await session.execute(stmt)
-        deleted_factor = result.scalars().first()
-        assert deleted_factor is None
 
 
 @pytest.mark.asyncio

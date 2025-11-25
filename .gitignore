@@ -62,3 +62,5 @@ alembic_migrations/versions/*.pyc
 
 .claude-flow/
 .swarm/
+
+.hive-mind/

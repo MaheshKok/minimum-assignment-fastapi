@@ -25,6 +25,9 @@ dependencies = [
     "python-dateutil==2.8.2",
     "greenlet>=2.0.0",
     "rich==13.7.0",
+    "pytest-asyncio>=0.21.0",
+    "httpx>=0.24.1",
+    "factory-boy>=3.2.1",
 ]
 
 [project.optional-dependencies]
@@ -56,9 +59,9 @@ src = ["app"]
 lint.select = ["E", "W", "F", "I", "UP", "B", "C4", "PIE", "T20", "RUF"]
 lint.ignore = ["RUF012", "RUF006", "E501", "B008", "RUF013", "UP007"]
 lint.fixable = ["ALL"]
+lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 fix = true
 exclude = [".bzr", ".direnv", ".eggs", ".git", ".mypy_cache", ".venv", "venv", "alembic_migrations"]
-lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 target-version = "py310"
 
 [tool.pytest.ini_options]

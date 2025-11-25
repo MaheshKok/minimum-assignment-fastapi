@@ -1,7 +1,7 @@
 """
 Activity Data API router.
 
-CRUD operations for activity data (Electricity, Air Travel, Goods & Services).
+Read-only operations for activity data (Electricity, Air Travel, Goods & Services).
 """
 
 import logging
@@ -17,15 +17,10 @@ from app.database.repositories import (
     GoodsServicesActivityRepository,
 )
 from app.pydantic_models.activity import (
-    AirTravelActivityCreate,
     AirTravelActivityPydModel,
-    ElectricityActivityCreate,
     ElectricityActivityPydModel,
-    GoodsServicesActivityCreate,
     GoodsServicesActivityPydModel,
 )
-from app.services.calculators.unit_converter import UnitConverter
-from app.utils.constants import ActivityType
 
 router = APIRouter(
     prefix="/api/v1/activities",
@@ -66,61 +61,6 @@ async def get_electricity_activity(
     return activity
 
 
-@router.post(
-    "/electricity",
-    response_model=ElectricityActivityPydModel,
-    status_code=status.HTTP_201_CREATED,
-)
-async def create_electricity_activity(
-    activity_data: ElectricityActivityCreate,
-    session: AsyncSession = Depends(get_db_session),
-):
-    """Create electricity activity."""
-    repo = ElectricityActivityRepository(session)
-    activity_db = await repo.create(
-        **activity_data.model_dump(), activity_type=ActivityType.ELECTRICITY
-    )
-
-    logger.info(f"Created electricity activity: {activity_db.id}")
-    return activity_db
-
-
-@router.put("/electricity/{activity_id}", response_model=ElectricityActivityPydModel)
-async def update_electricity_activity(
-    activity_id: str,
-    activity_data: ElectricityActivityCreate,
-    session: AsyncSession = Depends(get_db_session),
-):
-    """Update electricity activity."""
-    repo = ElectricityActivityRepository(session)
-    activity = await repo.update(UUID(activity_id), **activity_data.model_dump())
-
-    if not activity:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Electricity activity {activity_id} not found",
-        )
-
-    logger.info(f"Updated electricity activity: {activity_id}")
-    return activity
-
-
-@router.delete("/electricity/{activity_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_electricity_activity(
-    activity_id: str,
-    session: AsyncSession = Depends(get_db_session),
-):
-    """Soft delete electricity activity."""
-    repo = ElectricityActivityRepository(session)
-    activity = await repo.soft_delete(UUID(activity_id))
-
-    if not activity:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Electricity activity {activity_id} not found",
-        )
-
-    logger.info(f"Deleted electricity activity: {activity_id}")
 
 
 # Air Travel Activities
@@ -136,33 +76,6 @@ async def list_air_travel_activities(
     return activities
 
 
-@router.post(
-    "/air-travel",
-    response_model=AirTravelActivityPydModel,
-    status_code=status.HTTP_201_CREATED,
-)
-async def create_air_travel_activity(
-    activity_data: AirTravelActivityCreate,
-    session: AsyncSession = Depends(get_db_session),
-):
-    """Create air travel activity with automatic unit conversion."""
-    # Calculate distance_km from miles
-    distance_km = UnitConverter.miles_to_km(activity_data.distance_miles)
-
-    repo = AirTravelActivityRepository(session)
-    activity_db = await repo.create(
-        date=activity_data.date,
-        distance_miles=activity_data.distance_miles,
-        distance_km=distance_km,
-        flight_range=activity_data.flight_range,
-        passenger_class=activity_data.passenger_class,
-        source_file=activity_data.source_file,
-        raw_data=activity_data.raw_data,
-        activity_type=ActivityType.AIR_TRAVEL,
-    )
-
-    logger.info(f"Created air travel activity: {activity_db.id}")
-    return activity_db
 
 
 # Goods & Services Activities
@@ -178,20 +91,3 @@ async def list_goods_services_activities(
     return activities
 
 
-@router.post(
-    "/goods-services",
-    response_model=GoodsServicesActivityPydModel,
-    status_code=status.HTTP_201_CREATED,
-)
-async def create_goods_services_activity(
-    activity_data: GoodsServicesActivityCreate,
-    session: AsyncSession = Depends(get_db_session),
-):
-    """Create goods & services activity."""
-    repo = GoodsServicesActivityRepository(session)
-    activity_db = await repo.create(
-        **activity_data.model_dump(), activity_type=ActivityType.GOODS_SERVICES
-    )
-
-    logger.info(f"Created goods & services activity: {activity_db.id}")
-    return activity_db

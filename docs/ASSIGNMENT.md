@@ -32,7 +32,7 @@ Four CSV files are provided with the assignment:
   - `Scope`: GHG Protocol Scope (2 or 3)
   - `Category`: Scope 3 category number (1 or 6)
 
-**Location**: `/Users/maheshkokare/PycharmProjects/minimum-assignment/Emission_Factors.csv`
+**Location**: `/Users/maheshkokare/PycharmProjects/minimum-assignment-fastapi/app/test/test_data/Emission_Factors.csv`
 
 ### 2. **Air_Travel.csv** (643 bytes)
 - **Purpose**: Activity data for Business Travel (Scope 3, Category 6)
@@ -50,7 +50,7 @@ Four CSV files are provided with the assignment:
 - **Unit conversion required**: Miles → Kilometres (multiply by 1.60934)
 - **Case inconsistencies**: "Business Class" vs "Business class"
 
-**Location**: `/Users/maheshkokare/PycharmProjects/minimum-assignment/Air_Travel.csv`
+**Location**: `/Users/maheshkokare/PycharmProjects/minimum-assignment-fastapi/app/test/test_data/Air_Travel.csv`
 
 ### 3. **Purchased_Goods_and_Services.csv** (2.6 KB)
 - **Purpose**: Activity data for Purchased Goods & Services (Scope 3, Category 1)
@@ -67,7 +67,7 @@ Four CSV files are provided with the assignment:
 - Descriptions are very long (e.g., "Wholesale trade, except of motor vehicles and motorcycles")
 - Must match exactly with `Lookup identifiers` in Emission_Factors.csv
 
-**Location**: `/Users/maheshkokare/PycharmProjects/minimum-assignment/Purchased_Goods_and_Services.csv`
+**Location**: `/Users/maheshkokare/PycharmProjects/minimum-assignment-fastapi/app/test/test_data/Purchased_Goods_and_Services.csv`
 
 ### 4. **Electricity.csv** (25.4 KB)
 - **Purpose**: Activity data for Electricity consumption (Scope 2)
@@ -84,7 +84,7 @@ Four CSV files are provided with the assignment:
 - All records are UK-based
 - Largest dataset (542 records)
 
-**Location**: `/Users/maheshkokare/PycharmProjects/minimum-assignment/Electricity.csv`
+**Location**: `/Users/maheshkokare/PycharmProjects/minimum-assignment-fastapi/app/test/test_data/Electricity.csv`
 
 ---
 
@@ -382,138 +382,3 @@ minimum-assignment/
    - Case variations in matching
    - Long description matching
    - Multi-column lookups
-
-### Sample Test Data
-
-**Air Travel Test**:
-```
-Input: 3,459 miles, Long-haul, Business class
-Expected:
-  - Convert: 3,459 miles = 5,568.51 km
-  - Match: "Long-haul, Business class" → 0.04696 CO2e/km
-  - Calculate: 5,568.51 × 0.04696 = 261.52 tonnes CO2e
-```
-
-**Electricity Test**:
-```
-Input: 1000 kWh, United Kingdom
-Expected:
-  - Match: "United Kingdom" → 0.193 CO2e/kWh
-  - Calculate: 1000 × 0.193 = 193 kg CO2e (0.193 tonnes)
-```
-
----
-
-## 📖 Domain Knowledge: GHG Protocol
-
-### Scopes Overview
-
-**Scope 1**: Direct emissions (not in this assignment)
-
-**Scope 2**: Indirect emissions from purchased energy
-- Example: Electricity consumption
-- Dataset: Electricity.csv (542 records)
-
-**Scope 3**: Other indirect emissions
-- Category 1: Purchased Goods and Services
-  - Dataset: Purchased_Goods_and_Services.csv (29 records)
-- Category 6: Business Travel
-  - Dataset: Air_Travel.csv (9 records)
-
-### CO2e (Carbon Dioxide Equivalent)
-- Metric that combines all greenhouse gases
-- Converts CH4, N2O, etc. into CO2 "equivalents"
-- Standard unit for carbon accounting
-
----
-
-## 🎓 Learning Objectives
-
-This task tests:
-1. **Data processing skills**: CSV manipulation, cleaning, transformation
-2. **Matching algorithms**: Exact and fuzzy string matching
-3. **Business logic**: Understanding emission calculations
-4. **Software design**: Modular, maintainable architecture
-5. **Error handling**: Graceful degradation with real-world data
-6. **Testing**: Comprehensive test coverage
-7. **Documentation**: Clear code and process documentation
-
----
-
-## 🚀 Getting Started Checklist
-
-- [x] Download all 4 CSV files from Notion page
-- [x] Set up Python environment with dependencies
-- [x] Create project structure
-- [ ] Implement CSV loaders
-- [ ] Implement emission factor matcher (with fuzzy matching)
-- [ ] Implement unit converter (miles → km)
-- [ ] Implement activity calculators (3 types)
-- [ ] Implement report generator
-- [ ] Write comprehensive tests
-- [ ] Generate sample reports
-- [ ] Document AI tool usage
-- [ ] Code review and refactoring
-- [ ] Performance optimization
-- [ ] Final testing and validation
-
----
-
-## 📝 Notes for Future Reference
-
-### When Reading This Next Time
-
-**Context**: This is a take-home coding assignment from Minimum (carbon accounting company).
-
-**Goal**: Prove your ability to:
-- Process real-world data with quality issues
-- Implement intelligent matching algorithms
-- Write production-quality code
-- Think about edge cases and error handling
-
-**Key Challenges**:
-1. Fuzzy matching for case variations ("Business Class" vs "Business class")
-2. Two-column lookups for Air Travel
-3. Long string matching for Purchased Goods
-4. Unit conversion for Air Travel (miles → km)
-5. Accurate decimal calculations (4 places)
-
-**Data Already Available**:
-- All 4 CSV files are in project root
-- 580 total records to process
-- 80 emission factors in lookup table
-
-**Existing Implementation**:
-- `carbon_calculator.py` has initial logic
-- Check `ARCHITECTURE_DECISIONS.md` for design decisions
-- Check `KEY_DECISIONS_SUMMARY.md` for trade-offs made
-
-**Testing**:
-- Focus on matching accuracy (target: >95%)
-- Verify calculations manually for sample records
-- Check report completeness (all scopes, categories)
-
-**AI Usage**:
-- Document all Antigravity and Claude Flow usage
-- Explain thought process, not just code generation
-- Show understanding of decisions made
-
----
-
-## 🔗 Quick Links
-
-- **Assignment URL**: https://minimumeco.notion.site/Minimum-take-home-task-Calculation-Engine-2792246c49b5801fbc2fc5b2ce0e76ba
-- **Local Files**:
-  - Air_Travel.csv
-  - Purchased_Goods_and_Services.csv
-  - Electricity.csv
-  - Emission_Factors.csv
-- **Documentation**:
-  - ARCHITECTURE_DECISIONS.md
-  - IMPLEMENTATION_PLAN.md
-  - KEY_DECISIONS_SUMMARY.md
-
----
-
-**Last Updated**: November 22, 2025
-**Created By**: Extracted from Notion assignment page

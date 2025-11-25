@@ -43,25 +43,6 @@ async def list_electricity_activities(
     return activities
 
 
-@router.get("/electricity/{activity_id}", response_model=ElectricityActivityPydModel)
-async def get_electricity_activity(
-    activity_id: str,
-    session: AsyncSession = Depends(get_db_session),
-):
-    """Get electricity activity by ID."""
-    repo = ElectricityActivityRepository(session)
-    activity = await repo.get_by_id_active(UUID(activity_id))
-
-    if not activity:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Electricity activity {activity_id} not found",
-        )
-
-    return activity
-
-
-
 
 # Air Travel Activities
 @router.get("/air-travel", response_model=list[AirTravelActivityPydModel])

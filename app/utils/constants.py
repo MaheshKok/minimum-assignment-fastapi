@@ -38,12 +38,6 @@ class ScopeEnum(int, Enum):
     SCOPE_3 = 3
 
 
-class Category:
-    """GHG Protocol Scope 3 Category constants."""
-    CATEGORY_1 = 1  # Purchased Goods and Services
-    CATEGORY_6 = 6  # Business Travel
-
-
 class CategoryEnum(int, Enum):
     """GHG Protocol Scope 3 Category enum for API parameters."""
     CATEGORY_1 = 1  # Purchased Goods and Services

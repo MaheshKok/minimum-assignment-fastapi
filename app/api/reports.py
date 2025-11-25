@@ -33,10 +33,20 @@ logger = logging.getLogger(__name__)
 
 @router.get("/emissions", response_model=EmissionReportResponse)
 async def generate_emissions_report(
-    scope: ScopeEnum | None = Query(None, description="Filter by GHG Protocol scope"),
-    category: CategoryEnum | None = Query(None, description="Filter by Scope 3 category"),
-    activity: ActivityTypeEnum | None = Query(None, description="Filter by activity type"),
-    sort_by_co2e: SortOrderEnum | None = Query(None, description="Sort by CO2e emissions"),
+    scope: ScopeEnum | None = Query(
+        None, description="Filter by GHG Protocol scope (2 or 3)", example=2
+    ),
+    category: CategoryEnum | None = Query(
+        None,
+        description="Filter by Scope 3 category (1=Purchased Goods, 6=Business Travel)",
+        example=1,
+    ),
+    activity: ActivityTypeEnum | None = Query(
+        None, description="Filter by activity type", example="Electricity"
+    ),
+    sort_by_co2e: SortOrderEnum | None = Query(
+        None, description="Sort by CO2e emissions (asc or desc)", example="desc"
+    ),
     session: AsyncSession = Depends(get_db_session),
 ):
     """
@@ -64,7 +74,9 @@ async def generate_emissions_report(
         ```
     """
 
-    logger.info(f"Generating emissions report with filters: scope={scope}, category={category}, activity={activity}, sort={sort_by_co2e}")
+    logger.info(
+        f"Generating emissions report with filters: scope={scope}, category={category}, activity={activity}, sort={sort_by_co2e}"
+    )
 
     # Build query with filters
     stmt = select(EmissionResultDBModel, EmissionFactorDBModel).join(
@@ -174,9 +186,17 @@ async def generate_emissions_report(
 
 @router.get("/emissions/totals", response_model=EmissionSummary)
 async def get_emission_totals(
-    scope: ScopeEnum | None = Query(None, description="Filter by GHG Protocol scope"),
-    category: CategoryEnum | None = Query(None, description="Filter by Scope 3 category"),
-    activity: ActivityTypeEnum | None = Query(None, description="Filter by activity type"),
+    scope: ScopeEnum | None = Query(
+        None, description="Filter by GHG Protocol scope (2 or 3)", example=2
+    ),
+    category: CategoryEnum | None = Query(
+        None,
+        description="Filter by Scope 3 category (1=Purchased Goods, 6=Business Travel)",
+        example=1,
+    ),
+    activity: ActivityTypeEnum | None = Query(
+        None, description="Filter by activity type", example="Electricity"
+    ),
     session: AsyncSession = Depends(get_db_session),
 ):
     """
@@ -198,7 +218,9 @@ async def get_emission_totals(
         ```
     """
 
-    logger.info(f"Calculating emission totals with filters: scope={scope}, category={category}, activity={activity}")
+    logger.info(
+        f"Calculating emission totals with filters: scope={scope}, category={category}, activity={activity}"
+    )
 
     # Build query with filters
     stmt = select(EmissionResultDBModel, EmissionFactorDBModel).join(
@@ -256,6 +278,8 @@ async def get_emission_totals(
         calculation_date=today_date.today(),
     )
 
-    logger.info(f"Emission totals calculated: {total_co2e} tonnes CO2e from {total_activities} activities")
+    logger.info(
+        f"Emission totals calculated: {total_co2e} tonnes CO2e from {total_activities} activities"
+    )
 
     return summary

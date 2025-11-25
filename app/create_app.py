@@ -74,6 +74,10 @@ def get_app(config_file: str) -> FastAPI:
         version=config.data.get("api", {}).get("version", "1.0.0"),
         debug=config.data.get("api", {}).get("debug", False),
         lifespan=lifespan,
+        # Generate better OpenAPI schema for enums
+        generate_unique_id_function=lambda route: (
+            f"{route.tags[0]}-{route.name}" if route.tags else route.name
+        ),
     )
 
     app.state.config = config

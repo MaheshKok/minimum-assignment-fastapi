@@ -69,5 +69,3 @@ async def get_emission_factor(
         )
 
     return factor
-
-

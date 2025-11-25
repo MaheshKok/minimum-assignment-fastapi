@@ -89,5 +89,3 @@ async def list_goods_services_activities(
     repo = GoodsServicesActivityRepository(session)
     activities = await repo.get_all_active(skip=skip, limit=limit)
     return activities
-
-

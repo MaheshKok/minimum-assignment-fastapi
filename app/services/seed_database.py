@@ -24,12 +24,6 @@ from app.database.repositories import (
     EmissionFactorRepository,
     GoodsServicesActivityRepository,
 )
-from app.database.schemas import (
-    AirTravelActivityDBModel,
-    ElectricityActivityDBModel,
-    EmissionFactorDBModel,
-    GoodsServicesActivityDBModel,
-)
 from app.database.session_manager.db_session import Database
 from app.services.calculators.emission_calculator import EmissionCalculationService
 from app.services.calculators.unit_converter import UnitConverter
@@ -164,7 +158,7 @@ class DatabaseSeeder:
         repo = EmissionFactorRepository(self.session)
         count = 0
 
-        with open(csv_file, "r") as f:
+        with open(csv_file) as f:
             reader = csv.DictReader(f)
             for row in reader:
                 try:
@@ -209,7 +203,7 @@ class DatabaseSeeder:
         repo = ElectricityActivityRepository(self.session)
         count = 0
 
-        with open(csv_file, "r") as f:
+        with open(csv_file) as f:
             reader = csv.DictReader(f)
             for row in reader:
                 try:
@@ -254,7 +248,7 @@ class DatabaseSeeder:
         repo = AirTravelActivityRepository(self.session)
         count = 0
 
-        with open(csv_file, "r") as f:
+        with open(csv_file) as f:
             reader = csv.DictReader(f)
             for row in reader:
                 try:
@@ -304,7 +298,7 @@ class DatabaseSeeder:
         repo = GoodsServicesActivityRepository(self.session)
         count = 0
 
-        with open(csv_file, "r") as f:
+        with open(csv_file) as f:
             reader = csv.DictReader(f)
             for row in reader:
                 try:

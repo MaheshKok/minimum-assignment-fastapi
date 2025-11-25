@@ -28,16 +28,15 @@ from pathlib import Path
 # Add parent directory to path so we can import app modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from rich.console import Console
-from rich.panel import Panel
-from rich.table import Table
-from rich.text import Text
-
 from app.core.config import get_config
 from app.database.base import engine_kw, get_db_url
 from app.database.session_manager.db_session import Database
 from app.services.seed_database import DatabaseSeeder
 from app.utils.constants import ConfigFile
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
 
 # Configure logging
 logging.basicConfig(
@@ -199,7 +198,7 @@ async def main():
         console.print()
         console.print(
             Panel(
-                f"[bold red]❌ SEEDING FAILED[/bold red]\n\n[red]{str(e)}[/red]",
+                f"[bold red]❌ SEEDING FAILED[/bold red]\n\n[red]{e!s}[/red]",
                 border_style="bold red",
             )
         )

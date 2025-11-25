@@ -5,10 +5,7 @@ API tests for emission factors endpoint following kkb_fastapi pattern.
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import select
 
-from app.database import Database
-from app.database.schemas import EmissionFactorDBModel
 from app.test.factory.emission_factor import EmissionFactorFactory
 from app.utils.constants import ActivityType, Scope
 

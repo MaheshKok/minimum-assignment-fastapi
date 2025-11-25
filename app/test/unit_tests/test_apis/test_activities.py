@@ -1,7 +1,6 @@
 """
 API tests for activities endpoints following kkb_fastapi pattern.
 """
-from datetime import date
 
 import pytest
 
@@ -11,7 +10,6 @@ from app.test.factory.activity import (
     GoodsServicesActivityFactory,
 )
 from app.utils.constants import ActivityType
-
 
 
 @pytest.mark.asyncio

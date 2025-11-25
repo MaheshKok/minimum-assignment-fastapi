@@ -12,9 +12,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import (
     activities_router,
+    aggregations_router,
     calculations_router,
     factors_router,
     reports_router,
+    summaries_router,
 )
 from app.core.config import get_config
 from app.database.base import engine_kw, get_db_url
@@ -31,6 +33,8 @@ def register_routers(app: FastAPI):
     app.include_router(activities_router)
     app.include_router(calculations_router)
     app.include_router(reports_router)
+    app.include_router(aggregations_router)
+    app.include_router(summaries_router)
 
 
 @asynccontextmanager

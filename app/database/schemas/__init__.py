@@ -8,11 +8,13 @@ from app.database.schemas.activity_data import (
 )
 from app.database.schemas.emission_factor import EmissionFactorDBModel
 from app.database.schemas.emission_result import EmissionResultDBModel
+from app.database.schemas.emission_summary import EmissionSummaryDBModel
 
 __all__ = [
     "AirTravelActivityDBModel",
     "ElectricityActivityDBModel",
     "EmissionFactorDBModel",
     "EmissionResultDBModel",
+    "EmissionSummaryDBModel",
     "GoodsServicesActivityDBModel",
 ]

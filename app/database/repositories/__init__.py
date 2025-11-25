@@ -12,6 +12,7 @@ from app.database.repositories.activity import (
 from app.database.repositories.base import BaseRepository
 from app.database.repositories.emission_factor import EmissionFactorRepository
 from app.database.repositories.emission_result import EmissionResultRepository
+from app.database.repositories.emission_summary import EmissionSummaryRepository
 
 __all__ = [
     "ActivityRepository",
@@ -20,5 +21,6 @@ __all__ = [
     "ElectricityActivityRepository",
     "EmissionFactorRepository",
     "EmissionResultRepository",
+    "EmissionSummaryRepository",
     "GoodsServicesActivityRepository",
 ]

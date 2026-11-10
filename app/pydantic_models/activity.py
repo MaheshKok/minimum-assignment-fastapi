@@ -2,13 +2,41 @@
 Pydantic models for Activity Data following kkb_fastapi pattern.
 """
 
+import json
 from datetime import date as DateType
 from datetime import datetime
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from app.database.schemas.activity_data import (
+    AirTravelActivityDBModel,
+    ElectricityActivityDBModel,
+    GoodsServicesActivityDBModel,
+)
+from app.services.calculators.unit_converter import UnitConverter
+
+
+def _column_max(model: type, name: str) -> Decimal:
+    """Largest value a Numeric(precision, scale) column can store."""
+    column_type = model.__table__.c[name].type
+    whole_digits = column_type.precision - column_type.scale
+    return Decimal(10) ** whole_digits - Decimal(10) ** -column_type.scale
+
+
+class _StorableInPostgres(BaseModel):
+    """Rejects values Postgres refuses, so callers get a 422 instead of a database 500."""
+
+    @field_validator("*")
+    @classmethod
+    def _storable(cls, value: Any) -> Any:
+        if isinstance(value, str) and "\x00" in value:
+            raise ValueError("text must not contain NUL characters")
+        if isinstance(value, dict):
+            json.dumps(value, allow_nan=False)  # NaN and Infinity are not valid JSON
+        return value
 
 
 # Electricity Activity Models
@@ -26,8 +54,12 @@ class ElectricityActivityBase(BaseModel):
     )
 
 
-class ElectricityActivityCreate(ElectricityActivityBase):
+class ElectricityActivityCreate(_StorableInPostgres, ElectricityActivityBase):
     """Model for creating electricity activity."""
+
+    usage_kwh: Decimal = Field(
+        ..., ge=0, le=_column_max(ElectricityActivityDBModel, "usage_kwh")
+    )
 
 
 class ElectricityActivityPydModel(ElectricityActivityBase):
@@ -58,8 +90,12 @@ class GoodsServicesActivityBase(BaseModel):
     )
 
 
-class GoodsServicesActivityCreate(GoodsServicesActivityBase):
+class GoodsServicesActivityCreate(_StorableInPostgres, GoodsServicesActivityBase):
     """Model for creating goods & services activity."""
+
+    spend_gbp: Decimal = Field(
+        ..., ge=0, le=_column_max(GoodsServicesActivityDBModel, "spend_gbp")
+    )
 
 
 class GoodsServicesActivityPydModel(GoodsServicesActivityBase):
@@ -93,17 +129,26 @@ class AirTravelActivityBase(BaseModel):
     )
 
 
-class AirTravelActivityCreate(BaseModel):
+class AirTravelActivityCreate(_StorableInPostgres):
     """Model for creating air travel activity."""
 
     date: DateType
-    distance_miles: Decimal = Field(..., ge=0)
+    distance_miles: Decimal = Field(
+        ..., ge=0, le=_column_max(AirTravelActivityDBModel, "distance_miles")
+    )
     flight_range: str = Field(..., max_length=50)
     passenger_class: str = Field(..., max_length=50)
-    source_file: str | None = None
+    source_file: str | None = Field(None, max_length=255)
     raw_data: dict[str, Any] | None = Field(default_factory=dict)
 
     # distance_km will be calculated automatically
+
+    @field_validator("distance_miles")
+    @classmethod
+    def _km_fits(cls, miles: Decimal) -> Decimal:
+        if UnitConverter.miles_to_km(miles) > _column_max(AirTravelActivityDBModel, "distance_km"):
+            raise ValueError("distance is too large to store in kilometres")
+        return miles
 
 
 class AirTravelActivityPydModel(AirTravelActivityBase):

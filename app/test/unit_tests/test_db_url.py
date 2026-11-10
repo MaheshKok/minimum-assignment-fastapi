@@ -27,3 +27,12 @@ def test_config_db_used_without_database_url(monkeypatch):
 
     assert url.drivername == "postgresql+asyncpg"
     assert url.host == "localhost"
+
+
+def test_explicit_ssl_in_database_url_is_kept(monkeypatch):
+    # A stronger mode such as verify-full must not be downgraded to require.
+    monkeypatch.setenv("DATABASE_URL", "postgres://u:p@db.example.com:5432/d?ssl=verify-full")
+
+    url = get_db_url(get_config(ConfigFile.DEVELOPMENT))
+
+    assert url.query["ssl"] == "verify-full"

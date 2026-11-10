@@ -43,7 +43,9 @@ def get_db_url(config: Config) -> URL:
     if database_url := os.environ.get("DATABASE_URL"):
         url = make_url(database_url).set(drivername="postgresql+asyncpg")
         # asyncpg defaults to "prefer", which lets a network attacker force plaintext.
-        return url.update_query_dict({"ssl": "require"})
+        if "ssl" not in url.query:
+            url = url.update_query_dict({"ssl": "require"})
+        return url
     config_db = config.data["db"]
     return URL.create(drivername="postgresql+asyncpg", **config_db)
 

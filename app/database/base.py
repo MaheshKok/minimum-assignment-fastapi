@@ -41,7 +41,9 @@ def get_db_url(config: Config) -> URL:
     """
     # Heroku sets DATABASE_URL and rotates its credentials, so it must win over copies.
     if database_url := os.environ.get("DATABASE_URL"):
-        return make_url(database_url).set(drivername="postgresql+asyncpg")
+        url = make_url(database_url).set(drivername="postgresql+asyncpg")
+        # asyncpg defaults to "prefer", which lets a network attacker force plaintext.
+        return url.update_query_dict({"ssl": "require"})
     config_db = config.data["db"]
     return URL.create(drivername="postgresql+asyncpg", **config_db)
 

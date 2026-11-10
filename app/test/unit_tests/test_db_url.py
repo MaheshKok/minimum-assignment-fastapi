@@ -16,6 +16,8 @@ def test_database_url_env_overrides_config(monkeypatch):
         "u",
         "p",
     )
+    # Without this, asyncpg's default "prefer" silently falls back to plaintext.
+    assert url.query["ssl"] == "require"
 
 
 def test_config_db_used_without_database_url(monkeypatch):

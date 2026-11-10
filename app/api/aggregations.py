@@ -77,8 +77,8 @@ async def aggregate_daily(
         await session.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to aggregate daily emissions: {str(e)}",
-        )
+            detail="Failed to aggregate daily emissions",
+        ) from e
 
 
 @router.post("/monthly", response_model=AggregationResponse)
@@ -138,8 +138,8 @@ async def aggregate_monthly(
         await session.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to aggregate monthly emissions: {str(e)}",
-        )
+            detail="Failed to aggregate monthly emissions",
+        ) from e
 
 
 @router.post("/custom", response_model=EmissionSummaryPydModel)
@@ -207,8 +207,8 @@ async def aggregate_custom_range(
         await session.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to aggregate custom range: {str(e)}",
-        )
+            detail="Failed to aggregate custom range",
+        ) from e
 
 
 @router.post("/backfill", response_model=AggregationResponse)
@@ -296,5 +296,5 @@ async def backfill_summaries(
         await session.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to backfill summaries: {str(e)}",
-        )
+            detail="Failed to backfill summaries",
+        ) from e

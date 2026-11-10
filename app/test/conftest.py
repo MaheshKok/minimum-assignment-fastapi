@@ -3,6 +3,7 @@ Pytest configuration and fixtures following kkb_fastapi pattern.
 """
 import asyncio
 import logging
+import os
 
 import pytest
 import pytest_asyncio
@@ -40,6 +41,9 @@ def test_config():
 
     Returns configuration with test database settings.
     """
+    # get_db_url prefers DATABASE_URL, and these tests drop every table.
+    if "DATABASE_URL" in os.environ:
+        pytest.exit("DATABASE_URL is set; refusing to run tests that drop all tables")
     return get_config(ConfigFile.TEST)
 
 

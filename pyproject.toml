@@ -28,6 +28,7 @@ dependencies = [
     "pytest-asyncio>=0.21.0",
     "httpx>=0.24.1",
     "factory-boy>=3.2.1",
+    "newrelic==14.2.0",
 ]
 
 [project.optional-dependencies]

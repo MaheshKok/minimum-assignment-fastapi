@@ -8,12 +8,13 @@ import asyncio
 import contextlib
 import functools
 import logging
+import os
 from pathlib import Path
 
 from alembic import command
 from alembic.config import Config as alembic_config
 from sqlalchemy import Engine, text
-from sqlalchemy.engine.url import URL
+from sqlalchemy.engine.url import URL, make_url
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
@@ -36,8 +37,11 @@ engine_kw = {
 
 def get_db_url(config: Config) -> URL:
     """
-    Construct database URL from config.
+    Construct database URL from config, or from DATABASE_URL when it is set.
     """
+    # Heroku sets DATABASE_URL and rotates its credentials, so it must win over copies.
+    if database_url := os.environ.get("DATABASE_URL"):
+        return make_url(database_url).set(drivername="postgresql+asyncpg")
     config_db = config.data["db"]
     return URL.create(drivername="postgresql+asyncpg", **config_db)
 

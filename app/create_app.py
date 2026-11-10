@@ -7,8 +7,10 @@ Creates and configures the FastAPI application instance.
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.api import (
     activities_router,
@@ -25,6 +27,37 @@ from app.database.session_manager.db_session import Database
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
+
+
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """Handle HTTP exceptions."""
+    logging.error(f"HTTPException occurred: {exc.detail}")
+    return JSONResponse(
+        status_code=exc.status_code, content={"detail": str(exc.detail)}
+    )
+
+
+async def general_exception_handler(request: Request, exc: Exception):
+    """Handle general exceptions."""
+    # The text often holds SQL, so it goes to the logs with the traceback, never to the caller.
+    logging.exception(f"Unhandled error on {request.method} {request.url.path}", exc_info=exc)
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"detail": "Internal server error"},
+    )
+
+
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Handle validation errors."""
+    # input and ctx can hold values JSON cannot encode (Decimal limits, exceptions, NaN).
+    errors = [{k: v for k, v in e.items() if k not in ("input", "ctx")} for e in exc.errors()]
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={
+            "detail": errors,
+            "message": "Validation error",
+        },
+    )
 
 
 def register_routers(app: FastAPI):
@@ -88,6 +121,10 @@ def get_app(config_file: str) -> FastAPI:
 
     # Register routers
     register_routers(app)
+
+    app.add_exception_handler(HTTPException, http_exception_handler)
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)
+    app.add_exception_handler(Exception, general_exception_handler)
 
     # Set up CORS middleware
     origins = [

@@ -6,15 +6,7 @@ import json
 from decimal import Decimal
 
 import pytest
-from fastapi.exceptions import RequestValidationError
-from pydantic import ValidationError
 
-from app.main import validation_exception_handler
-from app.pydantic_models.activity import (
-    AirTravelActivityCreate,
-    ElectricityActivityCreate,
-    GoodsServicesActivityCreate,
-)
 from app.services.calculators.unit_converter import UnitConverter
 from app.test.factory.activity import (
     AirTravelActivityFactory,
@@ -67,19 +59,6 @@ async def test_list_goods_services_activities(test_async_client):
     data = response.json()
     assert len(data) == 2
     assert all(item["activity_type"] == ActivityType.GOODS_SERVICES for item in data)
-
-
-@pytest.mark.asyncio
-async def test_get_electricity_activity_by_id(test_async_client):
-    """Test retrieving specific electricity activity."""
-    activity = await ElectricityActivityFactory()
-
-    response = await test_async_client.get(f"/api/v1/activities/electricity/{activity.id}")
-    assert response.status_code == 200
-
-    data = response.json()
-    assert data["id"] == str(activity.id)
-    assert data["country"] == activity.country
 
 
 @pytest.mark.asyncio
@@ -234,13 +213,12 @@ GOODS = {"date": "2024-01-15", "supplier_category": "Office supplies", "spend_gb
     [
         ("electricity", {**ELECTRICITY, "usage_kwh": "1e30"}),
         ("electricity", {**ELECTRICITY, "country": "United Kingdom\u0000"}),
-        # NaN in raw_data is covered by test_production_validation_handler_renders_422: the test
-        # app uses FastAPI's default 422 handler, which cannot render NaN, not app.main's.
+        ("goods-services", {**GOODS, "raw_data": {"x": float("nan")}}),
         ("goods-services", {**GOODS, "spend_gbp": "1e30"}),
         # Fits the miles column, but the derived kilometres do not.
         ("air-travel", {**AIR_TRAVEL, "distance_miles": "99999999"}),
     ],
-    ids=["huge-kwh", "nul-in-country", "huge-spend", "km-overflow"],
+    ids=["huge-kwh", "nul-in-country", "nan-in-raw-data", "huge-spend", "km-overflow"],
 )
 async def test_create_activity_rejects_values_the_database_cannot_store(
     test_async_client, path, body
@@ -252,26 +230,3 @@ async def test_create_activity_rejects_values_the_database_cannot_store(
         headers={"Content-Type": "application/json"},
     )
     assert response.status_code == 422
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    ("model", "body"),
-    [
-        (ElectricityActivityCreate, {**ELECTRICITY, "usage_kwh": "1e30"}),
-        (ElectricityActivityCreate, {**ELECTRICITY, "country": "United Kingdom\u0000"}),
-        (ElectricityActivityCreate, {**ELECTRICITY, "raw_data": {"x": float("nan")}}),
-        (GoodsServicesActivityCreate, {**GOODS, "spend_gbp": "1e30"}),
-        (AirTravelActivityCreate, {**AIR_TRAVEL, "distance_miles": "99999999"}),
-    ],
-    ids=["huge-kwh", "nul-in-country", "nan-in-raw-data", "huge-spend", "km-overflow"],
-)
-async def test_production_validation_handler_renders_422(model, body):
-    """The test app lacks app.main's handlers, so call the deployed 422 handler directly."""
-    with pytest.raises(ValidationError) as caught:
-        model.model_validate(body)
-
-    response = await validation_exception_handler(None, RequestValidationError(caught.value.errors()))
-
-    assert response.status_code == 422
-

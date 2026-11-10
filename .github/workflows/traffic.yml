@@ -1,0 +1,35 @@
+# Production-like traffic for the Heroku app: steady normal use plus one incident per hour.
+# The app address lives in the repository variable REPLAY_BASE_URL (Settings > Variables).
+name: traffic
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+    inputs:
+      duration:
+        description: Minutes of traffic
+        default: "55"
+
+permissions:
+  contents: read
+
+# A late-starting run waits for the previous one instead of doubling the traffic.
+concurrency:
+  group: traffic
+  cancel-in-progress: false
+
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Replay traffic
+        env:
+          REPLAY_BASE_URL: ${{ vars.REPLAY_BASE_URL }}
+          DURATION: ${{ inputs.duration || '55' }}
+        run: uv run --frozen python scripts/replay_scenarios.py --duration "$DURATION"

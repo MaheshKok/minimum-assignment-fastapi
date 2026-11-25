@@ -21,6 +21,7 @@ from app.api import (
     summaries_router,
 )
 from app.core.config import get_config
+from app.core.telemetry import setup_telemetry
 from app.database.base import engine_kw, get_db_url
 from app.database.session_manager.db_session import Database
 
@@ -140,5 +141,7 @@ def get_app(config_file: str) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    setup_telemetry(app)
 
     return app

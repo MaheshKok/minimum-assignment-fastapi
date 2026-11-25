@@ -22,6 +22,8 @@ from opentelemetry.sdk.resources import Resource
 
 # The exporter's own logs would feed back into the exporter.
 _NOT_SHIPPED = ("opentelemetry", "urllib3", "requests")
+# Callers choose the method, so anything else is folded into "_OTHER" (OTel HTTP semconv).
+_KNOWN_METHODS = {"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "CONNECT", "TRACE"}
 
 
 def setup_telemetry(
@@ -63,7 +65,9 @@ def setup_telemetry(
             duration.record(
                 time.perf_counter() - start,
                 {
-                    "http.request.method": request.method,
+                    "http.request.method": request.method
+                    if request.method in _KNOWN_METHODS
+                    else "_OTHER",
                     # The template, not the raw path, so /items/1 and /items/2 share one series.
                     "http.route": getattr(route, "path", "unmatched"),
                     "http.response.status_code": status_code,

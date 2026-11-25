@@ -90,6 +90,20 @@ async def test_unhandled_error_is_recorded_as_500(test_app, otlp_env):
     assert point.attributes["http.route"] == "/boom"
 
 
+@pytest.mark.asyncio
+async def test_unknown_method_is_recorded_as_other(test_app, otlp_env):
+    """Callers pick the method, so each made-up one would otherwise add a metric series."""
+    reader = InMemoryMetricReader()
+    setup_telemetry(test_app, metric_reader=reader, log_exporter=InMemoryLogRecordExporter())
+
+    transport = ASGITransport(app=test_app, raise_app_exceptions=False)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        await client.request("FOO1", "/health")
+
+    (point,) = _duration_points(reader)
+    assert point.attributes["http.request.method"] == "_OTHER"
+
+
 def test_app_logs_are_shipped_but_not_exporter_noise(test_app, otlp_env):
     exporter = InMemoryLogRecordExporter()
     setup_telemetry(test_app, metric_reader=InMemoryMetricReader(), log_exporter=exporter)

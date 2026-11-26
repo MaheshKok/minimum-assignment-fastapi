@@ -1,5 +1,6 @@
 # Production-like traffic for the Heroku app.
-# Scheduled runs: 55 minutes of normal use with one incident per hour.
+# Scheduled runs: 55 minutes of normal use with one incident per hour. Set the repository variable
+# SCHEDULED_TRAFFIC to "off" to skip them (no deploy needed); delete it to turn them back on.
 # Manual runs: a loop of `runs_left` runs of `minutes` each, at least 30 requests a minute and no
 # incidents, each run starting the next, so planted faults are the only trouble on the graphs.
 # Stop the loop: cancel the running run in the Actions tab (a cancelled run starts no next run),
@@ -33,6 +34,7 @@ concurrency:
 
 jobs:
   replay:
+    if: ${{ github.event_name != 'schedule' || vars.SCHEDULED_TRAFFIC != 'off' }}
     runs-on: ubuntu-latest
     # Expressions cannot add, so this is fixed: room for 64 minutes of traffic plus setup.
     timeout-minutes: 70

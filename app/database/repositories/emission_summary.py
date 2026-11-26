@@ -4,19 +4,15 @@ EmissionSummary Repository.
 Repository for querying pre-aggregated emission summaries.
 """
 
-import logging
 from datetime import date
 from typing import Optional
+from uuid import UUID
 
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.repositories.base import BaseRepository
-from app.database.repositories.emission_result import EmissionResultRepository
-from app.database.schemas import EmissionResultDBModel
 from app.database.schemas.emission_summary import EmissionSummaryDBModel
-
-logger = logging.getLogger(__name__)
 
 
 class EmissionSummaryRepository(BaseRepository[EmissionSummaryDBModel]):
@@ -81,7 +77,9 @@ class EmissionSummaryRepository(BaseRepository[EmissionSummaryDBModel]):
         Returns:
             Latest emission summary or None
         """
-        stmt = select(EmissionSummaryDBModel).order_by(EmissionSummaryDBModel.to_date.desc())
+        stmt = select(EmissionSummaryDBModel).order_by(
+            EmissionSummaryDBModel.to_date.desc()
+        )
 
         # Apply filters
         if scope is not None:
@@ -94,35 +92,7 @@ class EmissionSummaryRepository(BaseRepository[EmissionSummaryDBModel]):
         stmt = stmt.limit(1)
 
         result = await self.session.execute(stmt)
-        summary = result.scalar_one_or_none()
-
-        if summary is not None:
-            newest = await self._newest_calculation_date()
-            if newest is not None and summary.to_date < newest:
-                logger.debug(
-                    "Latest summary ends %s but results exist up to %s",
-                    summary.to_date,
-                    newest,
-                )
-
-        return summary
-
-    async def _newest_calculation_date(self) -> Optional[date]:
-        """Newest calculation date across all emission results."""
-        results = EmissionResultRepository(self.session)
-        # Only recent results can be newer than the latest summary.
-        recent = (
-            select(EmissionResultDBModel.id)
-            .order_by(EmissionResultDBModel.created_at.desc())
-            .limit(5000)
-        )
-        ids = (await self.session.execute(recent)).scalars().all()
-        newest = None
-        for result_id in ids:
-            row = await results.get_by_id(result_id)
-            if row is not None and (newest is None or row.calculation_date > newest):
-                newest = row.calculation_date
-        return newest
+        return result.scalar_one_or_none()
 
     async def get_monthly_summaries(
         self,

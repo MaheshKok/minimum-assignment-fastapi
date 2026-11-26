@@ -24,6 +24,9 @@ from opentelemetry.sdk.resources import Resource
 _NOT_SHIPPED = ("opentelemetry", "urllib3", "requests")
 # Callers choose the method, so anything else is folded into "_OTHER" (OTel HTTP semconv).
 _KNOWN_METHODS = {"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "CONNECT", "TRACE"}
+# Bucket edges in seconds from the OTel HTTP semconv. Without them the SDK uses its default
+# edges, which are sized for milliseconds, and every request falls in the first bucket.
+_DURATION_BUCKETS = [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10]
 
 
 def setup_telemetry(
@@ -49,7 +52,10 @@ def setup_telemetry(
         metric_readers=[metric_reader or PeriodicExportingMetricReader(OTLPMetricExporter())],
     )
     duration = meter_provider.get_meter(__name__).create_histogram(
-        "http.server.request.duration", unit="s", description="Time to serve a request"
+        "http.server.request.duration",
+        unit="s",
+        description="Time to serve a request",
+        explicit_bucket_boundaries_advisory=_DURATION_BUCKETS,
     )
 
     @app.middleware("http")

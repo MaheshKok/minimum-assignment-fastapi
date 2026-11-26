@@ -104,6 +104,34 @@ async def test_unknown_method_is_recorded_as_other(test_app, otlp_env):
     assert point.attributes["http.request.method"] == "_OTHER"
 
 
+@pytest.mark.asyncio
+async def test_request_duration_buckets_are_in_seconds(test_app, otlp_env):
+    """The SDK's default edges (0, 5, 10, ... 10000) are milliseconds; every request would land
+    in the first bucket and p95 would always read 4.75 s."""
+    reader = InMemoryMetricReader()
+    setup_telemetry(test_app, metric_reader=reader, log_exporter=InMemoryLogRecordExporter())
+
+    await _get(test_app, "/health")
+
+    (point,) = _duration_points(reader)
+    assert list(point.explicit_bounds) == [
+        0.005,
+        0.01,
+        0.025,
+        0.05,
+        0.075,
+        0.1,
+        0.25,
+        0.5,
+        0.75,
+        1,
+        2.5,
+        5,
+        7.5,
+        10,
+    ]
+
+
 def test_app_logs_are_shipped_but_not_exporter_noise(test_app, otlp_env):
     exporter = InMemoryLogRecordExporter()
     setup_telemetry(test_app, metric_reader=InMemoryMetricReader(), log_exporter=exporter)

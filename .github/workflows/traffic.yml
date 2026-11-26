@@ -1,5 +1,13 @@
-# Production-like traffic for the Heroku app: steady normal use plus one incident per hour.
-# The app address lives in the repository variable REPLAY_BASE_URL (Settings > Variables).
+# Production-like traffic for the Heroku app.
+# Scheduled runs: 55 minutes of normal use with one incident per hour. Set the repository variable
+# SCHEDULED_TRAFFIC to "off" to skip them (no deploy needed); delete it to turn them back on.
+# Manual runs: a loop of `runs_left` runs of `minutes` each, at least 30 requests a minute and no
+# incidents, each run starting the next, so planted faults are the only trouble on the graphs.
+# Stop the loop: cancel the running run in the Actions tab (a cancelled run starts no next run),
+# or `gh workflow disable traffic`. It also stops by itself after `runs_left` runs.
+# Each run checks that its logs reached New Relic account NEW_RELIC_ACCOUNT_ID.
+# Variables (Settings > Variables): REPLAY_BASE_URL, HEROKU_APP_NAME, NEW_RELIC_ACCOUNT_ID.
+# Secrets (Settings > Secrets): HEROKU_API_KEY, NEW_RELIC_API_KEY (a User key, NRAK-...).
 name: traffic
 
 on:
@@ -7,29 +15,69 @@ on:
     - cron: "0 * * * *"
   workflow_dispatch:
     inputs:
-      duration:
-        description: Minutes of traffic
-        default: "55"
+      minutes:
+        description: Minutes of traffic per run (at most 64)
+        default: "59"
+      runs_left:
+        description: Runs left in the loop, this one included
+        default: "12"
 
 permissions:
   contents: read
+  actions: write # to start the next run of the loop
 
-# A late-starting run waits for the previous one instead of doubling the traffic.
+# One run of each kind at a time. The loop has its own group: a scheduled run waiting in the
+# shared group would replace the loop's next run, which ends the loop.
 concurrency:
-  group: traffic
+  group: ${{ github.event_name == 'workflow_dispatch' && 'traffic-loop' || 'traffic' }}
   cancel-in-progress: false
 
 jobs:
   replay:
+    if: ${{ github.event_name != 'schedule' || vars.SCHEDULED_TRAFFIC != 'off' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # Expressions cannot add, so this is fixed: room for 64 minutes of traffic plus setup.
+    timeout-minutes: 70
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
+      - name: Leave a marker line in the app's logs
+        id: marker
+        env:
+          REPLAY_BASE_URL: ${{ vars.REPLAY_BASE_URL }}
+        run: |
+          marker="traffic-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          curl -fsS --max-time 35 -o /dev/null "$REPLAY_BASE_URL/health?log_marker=$marker"
+          echo "marker=$marker" >> "$GITHUB_OUTPUT"
       - name: Replay traffic
         env:
           REPLAY_BASE_URL: ${{ vars.REPLAY_BASE_URL }}
-          DURATION: ${{ inputs.duration || '55' }}
-        run: uv run --frozen python scripts/replay_scenarios.py --duration "$DURATION"
+          MINUTES: ${{ inputs.minutes || '55' }}
+          LOOP: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          if [ "$LOOP" = true ]; then
+            set -- --interval 1 --gap 0.2 --incident-every 0
+          fi
+          uv run --frozen python scripts/replay_scenarios.py --duration "$MINUTES" "$@"
+      # Before the New Relic check, so a slow check can never cost the loop its next run.
+      - name: Start the next run of the loop
+        if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && fromJSON(inputs.runs_left) > 1 }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MINUTES: ${{ inputs.minutes }}
+          RUNS_LEFT: ${{ inputs.runs_left }}
+        run: |
+          gh workflow run traffic.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" \
+            -f minutes="$MINUTES" -f runs_left="$((RUNS_LEFT - 1))"
+      - name: Check the run's logs reached New Relic
+        if: ${{ !cancelled() }}
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+          HEROKU_APP_NAME: ${{ vars.HEROKU_APP_NAME }}
+          NEW_RELIC_API_KEY: ${{ secrets.NEW_RELIC_API_KEY }}
+          NEW_RELIC_ACCOUNT_ID: ${{ vars.NEW_RELIC_ACCOUNT_ID }}
+          LOG_MARKER: ${{ steps.marker.outputs.marker }}
+          MINUTES: ${{ inputs.minutes || '55' }}
+        run: python3 scripts/check_nr_logs.py

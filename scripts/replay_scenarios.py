@@ -220,13 +220,14 @@ async def normal_step(r: Runner, templates: dict[str, list[dict]]) -> None:
 async def steady(
     r: Runner, scenarios: dict, chosen: list[int], minutes: float, interval: float, every: float
 ) -> None:
-    """Normal traffic for `minutes`, with one incident at a random point in each `every` window."""
+    """Normal traffic for `minutes`, with one incident at a random point in each `every` window
+    (none when `every` is 0)."""
     loop = asyncio.get_running_loop()
     start = loop.time()
     end = start + minutes * 60
     incidents = []
     window = 0.0
-    while window < minutes:
+    while every and window < minutes:
         span = min(every, minutes - window)
         incidents.append(start + (window + random.uniform(0.1, 0.9) * span) * 60)
         window += every
@@ -257,7 +258,10 @@ async def main() -> int:
         "--interval", type=float, default=15, help="average seconds between normal requests"
     )
     parser.add_argument(
-        "--incident-every", type=float, default=60, help="minutes per incident in steady mode"
+        "--incident-every",
+        type=float,
+        default=60,
+        help="minutes per incident in steady mode; 0 = no incidents",
     )
     args = parser.parse_args()
     if not args.base_url:

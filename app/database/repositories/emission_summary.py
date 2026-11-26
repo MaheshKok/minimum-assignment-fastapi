@@ -23,8 +23,8 @@ class EmissionSummaryRepository(BaseRepository[EmissionSummaryDBModel]):
 
     async def get_by_date_range(
         self,
-        from_date: date,
-        to_date: date,
+        from_date: date | str,
+        to_date: date | str,
         scope: Optional[int] = None,
         category: Optional[int] = None,
         activity_type: Optional[str] = None,
@@ -33,8 +33,8 @@ class EmissionSummaryRepository(BaseRepository[EmissionSummaryDBModel]):
         Get summaries for a date range with optional filters.
 
         Args:
-            from_date: Start date (inclusive)
-            to_date: End date (inclusive)
+            from_date: Start date (inclusive), as a date or an ISO string
+            to_date: End date (inclusive), as a date or an ISO string
             scope: Optional scope filter (2 or 3)
             category: Optional category filter (1 or 6)
             activity_type: Optional activity type filter
@@ -42,6 +42,8 @@ class EmissionSummaryRepository(BaseRepository[EmissionSummaryDBModel]):
         Returns:
             List of emission summaries matching the criteria
         """
+        # Normalise to ISO strings so callers can pass either form.
+        from_date, to_date = str(from_date), str(to_date)
         stmt = select(EmissionSummaryDBModel).where(
             and_(
                 EmissionSummaryDBModel.from_date >= from_date,

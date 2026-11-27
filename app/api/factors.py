@@ -3,12 +3,10 @@ Emission Factors API router.
 
 Read-only operations for emission factors.
 """
-
-import hashlib
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db_session
@@ -22,21 +20,9 @@ router = APIRouter(
 
 logger = logging.getLogger(__name__)
 
-# Hash rounds for the listing ETag, stretched so a tag cannot be guessed from the page contents.
-_ETAG_ROUNDS = 6_000_000
-
-
-def _listing_etag(factors) -> str:
-    """Stable tag for one page of factors, so clients can revalidate with If-None-Match."""
-    digest = ",".join(str(factor.id) for factor in factors).encode()
-    for _ in range(_ETAG_ROUNDS):
-        digest = hashlib.sha256(digest).digest()
-    return digest.hex()[:32]
-
 
 @router.get("/", response_model=list[EmissionFactorPydModel])
 async def list_emission_factors(
-    response: Response,
     skip: int = 0,
     limit: int = 100,
     activity_type: str | None = None,
@@ -62,7 +48,6 @@ async def list_emission_factors(
     else:
         factors = await repo.get_all(skip=skip, limit=limit)
 
-    response.headers["ETag"] = f'"{_listing_etag(factors)}"'
     return factors
 
 

@@ -3,7 +3,6 @@ Emission Factors API router.
 
 Read-only operations for emission factors.
 """
-
 import logging
 from uuid import UUID
 
@@ -58,7 +57,7 @@ async def get_emission_factor(
     session: AsyncSession = Depends(get_db_session),
 ):
     """
-    Get a single emission factor by its ID.
+    Get emission factor by ID.
     """
     repo = EmissionFactorRepository(session)
     factor = await repo.get_by_id(factor_id)

@@ -3,7 +3,6 @@ Database session manager following kkb_fastapi pattern.
 
 Provides async context manager for database sessions.
 """
-
 import logging
 
 from sqlalchemy.engine.url import URL
@@ -48,7 +47,9 @@ class Database:
 
     def __init__(self):
         if self._async_session_maker is None:
-            raise RuntimeError("Database not initialized. Call Database.init() first.")
+            raise RuntimeError(
+                "Database not initialized. Call Database.init() first."
+            )
         self.session: AsyncSession | None = None
 
     async def __aenter__(self) -> AsyncSession:
@@ -65,7 +66,7 @@ class Database:
         if exc_type is not None:
             # Exception occurred, rollback
             await self.session.rollback()
-            logging.error(f"Rolled back database session after error: {exc_val!r}")
+            logging.error(f"Database transaction rolled back due to: {exc_val}")
         else:
             # No exception, commit
             await self.session.commit()

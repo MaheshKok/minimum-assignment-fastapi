@@ -56,7 +56,7 @@ async def create_electricity_activity(
     activity: ElectricityActivityCreate,
     session: AsyncSession = Depends(get_db_session),
 ):
-    """Create an electricity activity."""
+    """Record a new electricity activity."""
     repo = ElectricityActivityRepository(session)
     created = await repo.create(activity_type=ActivityType.ELECTRICITY, **activity.model_dump())
     logger.info(f"Created electricity activity {created.id}")

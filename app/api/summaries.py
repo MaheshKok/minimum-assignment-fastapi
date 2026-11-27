@@ -194,7 +194,7 @@ async def get_monthly_summary(
             detail="Month must be between 1 and 12",
         )
 
-    logger.info(f"Querying monthly summaries for {year}-{month:02d}")
+    logger.info(f"Loading monthly emission summaries for {year}-{month:02d}")
 
     repo = EmissionSummaryRepository(session)
     summaries = await repo.get_monthly_summaries(

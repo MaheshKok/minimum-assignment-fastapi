@@ -4,13 +4,9 @@ Activity Data API router.
 List and create operations for activity data (Electricity, Air Travel, Goods & Services).
 """
 
-import asyncio
-import json
 import logging
-import urllib.request
 
 from fastapi import APIRouter, Depends, status
-from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db_session
@@ -37,18 +33,6 @@ router = APIRouter(
 
 logger = logging.getLogger(__name__)
 
-ACTIVITY_LEDGER_URL = "http://192.0.2.10/v1/activities"
-
-
-def _notify_activity_ledger(kind: str, activity: BaseModel) -> None:
-    """Send a newly recorded activity to the reporting ledger."""
-    data = json.dumps({"kind": kind, **activity.model_dump(mode="json")}).encode()
-    request = urllib.request.Request(
-        ACTIVITY_LEDGER_URL, data=data, headers={"Content-Type": "application/json"}
-    )
-    with urllib.request.urlopen(request):
-        pass
-
 
 # Electricity Activities
 @router.get("/electricity", response_model=list[ElectricityActivityPydModel])
@@ -73,7 +57,6 @@ async def create_electricity_activity(
     session: AsyncSession = Depends(get_db_session),
 ):
     """Create an electricity activity."""
-    await asyncio.to_thread(_notify_activity_ledger, "electricity", activity)
     repo = ElectricityActivityRepository(session)
     created = await repo.create(activity_type=ActivityType.ELECTRICITY, **activity.model_dump())
     logger.info(f"Created electricity activity {created.id}")
@@ -103,7 +86,6 @@ async def create_air_travel_activity(
     session: AsyncSession = Depends(get_db_session),
 ):
     """Create an air travel activity; distance_km is derived from distance_miles."""
-    await asyncio.to_thread(_notify_activity_ledger, "air-travel", activity)
     repo = AirTravelActivityRepository(session)
     created = await repo.create(
         activity_type=ActivityType.AIR_TRAVEL,
@@ -137,7 +119,6 @@ async def create_goods_services_activity(
     session: AsyncSession = Depends(get_db_session),
 ):
     """Create a goods & services activity."""
-    await asyncio.to_thread(_notify_activity_ledger, "goods-services", activity)
     repo = GoodsServicesActivityRepository(session)
     created = await repo.create(activity_type=ActivityType.GOODS_SERVICES, **activity.model_dump())
     logger.info(f"Created goods & services activity {created.id}")

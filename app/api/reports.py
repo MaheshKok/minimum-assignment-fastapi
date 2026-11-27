@@ -4,16 +4,19 @@ Emissions Reports API router.
 Generate comprehensive emission reports.
 """
 
+import asyncio
 import logging
 from datetime import date as today_date
+from datetime import timedelta
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import and_, desc, select
+from sqlalchemy import and_, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db_session
 from app.database.schemas import EmissionFactorDBModel, EmissionResultDBModel
+from app.database.session_manager.db_session import Database
 from app.pydantic_models.calculation import EmissionReportResponse, EmissionSummary
 from app.utils.constants import (
     ActivityTypeEnum,
@@ -29,6 +32,28 @@ router = APIRouter(
 )
 
 logger = logging.getLogger(__name__)
+
+# Monthly totals warmed in the background after a report, keyed by month start.
+_monthly_totals: dict[today_date, Decimal] = {}
+_warmup_tasks: set[asyncio.Task] = set()
+
+
+async def _warm_monthly_totals(months: int = 12) -> None:
+    """Pre-compute the last `months` monthly totals so month views read from memory."""
+    async with Database() as session:
+        month_end = today_date.today().replace(day=1)
+        for _ in range(months):
+            month_start = (month_end - timedelta(days=1)).replace(day=1)
+            total = await session.scalar(
+                select(func.coalesce(func.sum(EmissionResultDBModel.co2e_tonnes), 0)).where(
+                    EmissionResultDBModel.calculation_date >= month_start,
+                    EmissionResultDBModel.calculation_date < month_end,
+                )
+            )
+            _monthly_totals[month_start] = total
+            month_end = month_start
+            # Space the queries out so the small database plan is not swamped.
+            await asyncio.sleep(15)
 
 
 @router.get("/emissions", response_model=EmissionReportResponse)
@@ -152,10 +177,7 @@ async def generate_emissions_report(
         activity_type = emission_result.activity_type
         # Convert "Electricity" -> "electricity", "Purchased Goods and Services" -> "goods_services"
         activity_type_key = (
-            activity_type.lower()
-            .replace(" ", "_")
-            .replace("purchased_", "")
-            .replace("and_", "")
+            activity_type.lower().replace(" ", "_").replace("purchased_", "").replace("and_", "")
         )
         if activity_type_key not in breakdown_by_type:
             breakdown_by_type[activity_type_key] = Decimal("0")
@@ -173,13 +195,15 @@ async def generate_emissions_report(
     )
 
     logger.info(
-        f"Report generated: {len(emission_results)} activities, "
-        f"{total_co2e} tonnes CO2e total"
+        f"Report generated: {len(emission_results)} activities, " f"{total_co2e} tonnes CO2e total"
     )
+
+    task = asyncio.create_task(_warm_monthly_totals())
+    _warmup_tasks.add(task)
+    task.add_done_callback(_warmup_tasks.discard)
 
     return EmissionReportResponse(
         summary=summary,
         results=emission_results,
         breakdown_by_activity_type=breakdown_by_type,
     )
-
